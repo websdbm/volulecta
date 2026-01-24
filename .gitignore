@@ -1,0 +1,30 @@
+# Environment
+.env
+
+# Composer
+/vendor/
+
+# Logs
+/logs/*.log
+!/logs/.gitkeep
+
+# Cache
+/cache/*
+!/cache/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules (if any frontend build)
+node_modules/
+
+# Docker volumes
+docker/volumes/

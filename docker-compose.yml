@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: volulecta_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/var/www/html/public
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - volulecta_network
+
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: volulecta_php
+    volumes:
+      - .:/var/www/html
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - APP_URL=${APP_URL:-http://localhost:8080}
+      - APP_SECRET=${APP_SECRET}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-volulecta}
+      - DB_USER=${DB_USER:-volulecta}
+      - DB_PASS=${DB_PASS:-volulecta}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - AMAZON_ASSOCIATE_TAG_IT=${AMAZON_ASSOCIATE_TAG_IT}
+      - AMAZON_ACCESS_KEY=${AMAZON_ACCESS_KEY}
+      - AMAZON_SECRET_KEY=${AMAZON_SECRET_KEY}
+      - AMAZON_PARTNER_TAG=${AMAZON_PARTNER_TAG}
+      - AMAZON_REGION=${AMAZON_REGION:-it}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_SUBJECT=${VAPID_SUBJECT}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - volulecta_network
+
+  db:
+    image: mariadb:10.11
+    container_name: volulecta_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS:-root}
+      - MYSQL_DATABASE=${DB_NAME:-volulecta}
+      - MYSQL_USER=${DB_USER:-volulecta}
+      - MYSQL_PASSWORD=${DB_PASS:-volulecta}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "33060:3306"
+    networks:
+      - volulecta_network
+
+networks:
+  volulecta_network:
+    driver: bridge
+
+volumes:
+  db_data:
