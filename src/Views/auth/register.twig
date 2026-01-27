@@ -1,0 +1,95 @@
+{% extends "layout.twig" %}
+
+{% block title %}{{ title }} - {{ app_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .auth-form {
+        max-width: 400px;
+        margin: 2rem auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .auth-form h2 {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .btn-submit:hover {
+        background: #2980b9;
+    }
+    .error-msg {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 0.75rem;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    .auth-links {
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+    .auth-links a {
+        color: #3498db;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <h2>Crea il tuo Account</h2>
+
+    {% if error %}
+        <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/register">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="confirm_password">Conferma Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+        <button type="submit" class="btn-submit">Registrati</button>
+    </form>
+
+    <div class="auth-links">
+        Hai già un account? <a href="/login">Accedi</a>
+    </div>
+</div>
+{% endblock %}

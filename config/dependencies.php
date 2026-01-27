@@ -60,5 +60,20 @@ return function (ContainerBuilder $containerBuilder) {
             return new PDO($dsn, $user, $pass, $options);
         },
 
+        // Repositories
+        \App\Domain\Repositories\UserRepositoryInterface::class => function (ContainerInterface $c) {
+            return new \App\Infrastructure\Persistence\PdoUserRepository($c->get(PDO::class));
+        },
+
+        // Services
+        \App\Application\Services\AuthService::class => function (ContainerInterface $c) {
+            return new \App\Application\Services\AuthService($c->get(\App\Domain\Repositories\UserRepositoryInterface::class));
+        },
+
+        // Middleware
+        \App\Application\Middleware\AuthMiddleware::class => function (ContainerInterface $c) {
+            return new \App\Application\Middleware\AuthMiddleware();
+        },
+
     ]);
 };

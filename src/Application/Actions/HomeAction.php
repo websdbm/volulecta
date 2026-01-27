@@ -19,6 +19,20 @@ class HomeAction
 
     public function __invoke(Request $request, Response $response): Response
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (isset($_SESSION['user_id'])) {
+            $role = $_SESSION['user_role'] ?? 'user';
+            $redirectUrl = match ($role) {
+                'admin' => '/admin/dashboard',
+                'bibliophile' => '/bibliofilo/dashboard',
+                default => '/app/dashboard',
+            };
+            return $response->withHeader('Location', $redirectUrl)->withStatus(302);
+        }
+
         return $this->twig->render($response, 'home.twig', [
             'title' => 'Benvenuto in Volulecta',
             'description' => 'Il tuo servizio di raccomandazioni librarie personalizzate',
