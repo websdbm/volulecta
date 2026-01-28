@@ -3,6 +3,7 @@
 {% block title %}{{ title }} - {{ app_name }}{% endblock %}
 
 {% block styles %}
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <style>
     body { background: #f8f9fa; overflow: hidden; }
     /* Override main layout constraints for the builder */
@@ -210,6 +211,25 @@
     .btn-publish:hover { background: #059669; transform: translateY(-1px); }
     .btn-publish:active { transform: translateY(0); }
 
+    .btn-preview {
+        padding: 0.8rem;
+        background: #8b5cf6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        text-decoration: none;
+    }
+    .btn-preview:hover { background: #7c3aed; transform: translateY(-1px); }
+    .btn-preview:active { transform: translateY(0); }
+
     /* Checkbox Styling */
     .checkbox-group {
         display: flex;
@@ -335,6 +355,9 @@
             <button id="save-btn" class="btn-save">
                 <span>💾</span> Salva Pagina
             </button>
+            <a id="preview-btn" class="btn-preview" target="_blank">
+                <span>👁️</span> Anteprima
+            </a>
             <a href="/admin/cms" class="btn-exit">Esci</a>
         </div>
     </div>
@@ -374,11 +397,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
     const pageId = {{ page.id }};
+    const pageSlug = '{{ page.slug }}';
     const canvas = document.getElementById('canvas');
     const settingsForm = document.getElementById('settings-form');
     const settingsBlank = document.getElementById('settings-blank');
     const fieldsContainer = document.getElementById('fields-container');
     const canvasContainer = document.getElementById('canvas-container');
+    
+    // Imposta l'href del bottone anteprima
+    document.getElementById('preview-btn').href = '/p/' + pageSlug;
     
     let blocks = {{ page.blocksJson|default('[]')|raw }};
     let activeBlockIndex = null;
@@ -545,24 +572,48 @@
         contentLabel.innerText = "Contenuto " + (block.type === 'image' ? 'URL' : 'Testo');
         contentGroup.appendChild(contentLabel);
 
-        const contentInput = document.createElement('input');
-        contentInput.className = 'form-control';
-        contentInput.value = block.type === 'image' ? (block.content.url || '') : block.content.text;
-        contentInput.oninput = (e) => {
-            if (block.type === 'image') block.content.url = e.target.value;
-            else block.content.text = e.target.value;
-            renderCanvas();
-        };
-        contentGroup.appendChild(contentInput);
-
-        // Upload se Immagine
         if (block.type === 'image') {
+            const contentInput = document.createElement('input');
+            contentInput.className = 'form-control';
+            contentInput.value = block.content.url || '';
+            contentInput.oninput = (e) => {
+                block.content.url = e.target.value;
+                renderCanvas();
+            };
+            contentGroup.appendChild(contentInput);
+
             const uploadBtn = document.createElement('input');
             uploadBtn.type = 'file';
             uploadBtn.style.marginTop = '10px';
             uploadBtn.style.fontSize = '0.8rem';
             uploadBtn.onchange = (e) => handleUpload(e, index);
             contentGroup.appendChild(uploadBtn);
+        } else {
+            // Usa TinyMCE per text e title
+            const textareaId = 'wysiwyg-' + index + '-' + Date.now();
+            const textarea = document.createElement('textarea');
+            textarea.id = textareaId;
+            textarea.className = 'form-control';
+            textarea.value = block.content.text || '';
+            textarea.style.minHeight = '200px';
+            contentGroup.appendChild(textarea);
+
+            // Inizializza TinyMCE dopo che l'elemento è nel DOM
+            setTimeout(() => {
+                tinymce.init({
+                    selector: '#' + textareaId,
+                    menubar: false,
+                    plugins: 'lists link image',
+                    toolbar: 'undo redo | formatselect | bold italic | bullist numlist | link image',
+                    height: 250,
+                    setup: function(editor) {
+                        editor.on('change', function() {
+                            block.content.text = editor.getContent();
+                            renderCanvas();
+                        });
+                    }
+                });
+            }, 0);
         }
         fieldsContainer.appendChild(contentGroup);
 
