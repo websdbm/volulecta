@@ -48,9 +48,44 @@
     .actions {
         display: flex;
         gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
     }
     .btn-edit { color: #3498db; text-decoration: none; font-weight: 600; }
     .btn-delete { color: #e74c3c; text-decoration: none; font-weight: 600; }
+    .btn-action {
+        padding: 0.3rem 0.7rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .btn-publish {
+        color: #27ae60;
+        border-color: #27ae60;
+    }
+    .btn-publish:hover { background: #dcfce7; }
+    .btn-draft {
+        color: #f39c12;
+        border-color: #f39c12;
+    }
+    .btn-draft:hover { background: #fef9c3; }
+    .btn-homepage {
+        color: #8e44ad;
+        border-color: #8e44ad;
+    }
+    .btn-homepage:hover { background: #f3e5f5; }
+    .home-badge {
+        display: inline-block;
+        background: #8e44ad;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
 </style>
 {% endblock %}
 
@@ -84,9 +119,20 @@
                     <span class="status-badge status-{{ page.status }}">
                         {{ page.status|capitalize }}
                     </span>
+                    {% if page.isHomepage %}<span class="home-badge">🏠 Homepage</span>{% endif %}
                 </td>
                 <td class="actions">
                     <a href="/admin/cms/builder/{{ page.id }}" class="btn-edit">Builder 🎨</a>
+                    {% if page.status == 'published' %}
+                        <button class="btn-action btn-draft" onclick="setPageStatus({{ page.id }}, 'draft')">Bozza</button>
+                    {% else %}
+                        <button class="btn-action btn-publish" onclick="publishPage({{ page.id }})">Pubblica</button>
+                    {% endif %}
+                    {% if not page.isHomepage %}
+                        <button class="btn-action btn-homepage" onclick="setHomepage({{ page.id }})">🏠 Homepage</button>
+                    {% else %}
+                        <span style="color: #8e44ad; font-weight: 600;">✓ Homepage</span>
+                    {% endif %}
                     <a href="/admin/cms/delete/{{ page.id }}" class="btn-delete" onclick="return confirm('Sicuro di voler eliminare questa pagina?')">Elimina</a>
                 </td>
             </tr>
@@ -100,4 +146,66 @@
         </tbody>
     </table>
 </div>
+
+<script>
+    async function publishPage(pageId) {
+        if (!confirm('Sei sicuro di voler pubblicare questa pagina?')) return;
+
+        try {
+            const res = await fetch(`/admin/cms/${pageId}/publish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (res.ok) {
+                alert('Pagina pubblicata con successo!');
+                window.location.reload();
+            } else {
+                alert('Errore nel pubblicare la pagina');
+            }
+        } catch (err) {
+            alert('Errore: ' + err.message);
+        }
+    }
+
+    async function setPageStatus(pageId, status) {
+        if (!confirm(`Sei sicuro di voler impostare questa pagina come ${status}?`)) return;
+
+        try {
+            const res = await fetch(`/admin/cms/${pageId}/unpublish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (res.ok) {
+                alert(`Pagina impostata come ${status} con successo!`);
+                window.location.reload();
+            } else {
+                alert('Errore nell\'aggiornare lo stato della pagina');
+            }
+        } catch (err) {
+            alert('Errore: ' + err.message);
+        }
+    }
+
+    async function setHomepage(pageId) {
+        if (!confirm('Sei sicuro di voler impostare questa pagina come homepage?')) return;
+
+        try {
+            const res = await fetch(`/admin/cms/${pageId}/set-homepage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (res.ok) {
+                alert('Homepage impostata con successo!');
+                window.location.reload();
+            } else {
+                alert('Errore nell\'impostare la homepage');
+            }
+        } catch (err) {
+            alert('Errore: ' + err.message);
+        }
+    }
+</script>
 {% endblock %}

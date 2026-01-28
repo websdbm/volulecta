@@ -31,6 +31,7 @@ return function (App $app) {
         $group->get('/cms/builder/{id}', \App\Application\Actions\Admin\Cms\CmsBuilderAction::class);
         $group->post('/cms/builder/{id}/save', \App\Application\Actions\Admin\Cms\SaveBuilderAction::class);
         $group->post('/cms/{id}/publish', \App\Application\Actions\Admin\Cms\PublishPageAction::class);
+        $group->post('/cms/{id}/unpublish', \App\Application\Actions\Admin\Cms\UnpublishPageAction::class);
         $group->post('/cms/{id}/set-homepage', \App\Application\Actions\Admin\Cms\SetHomepageAction::class);
         $group->post('/cms/upload', \App\Application\Actions\Admin\Cms\CmsUploadAction::class);
     })->add(new \App\Application\Middleware\RoleMiddleware('admin'));
