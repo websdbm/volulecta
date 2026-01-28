@@ -192,6 +192,90 @@
     }
     .btn-exit:hover { background: #e2e8f0; color: #1e293b; }
 
+    .btn-publish {
+        padding: 0.8rem;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .btn-publish:hover { background: #059669; transform: translateY(-1px); }
+    .btn-publish:active { transform: translateY(0); }
+
+    /* Checkbox Styling */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+    .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #3498db;
+    }
+    .checkbox-group label {
+        margin: 0;
+        font-size: 0.9rem;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    /* Range Slider */
+    .range-slider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .range-slider input[type="range"] {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: #e2e8f0;
+        outline: none;
+        -webkit-appearance: none;
+    }
+    .range-slider input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #3498db;
+        cursor: pointer;
+    }
+    .range-slider input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #3498db;
+        cursor: pointer;
+        border: none;
+    }
+    .range-value {
+        min-width: 60px;
+        text-align: right;
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.9rem;
+    }
+
+    /* Google Fonts Link */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;700&family=Inter:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap');
+
     /* Saving Overlay */
     #save-status {
         position: fixed;
@@ -234,7 +318,20 @@
             </div>
         </div>
         <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
+        
+        <!-- Pagina Settings -->
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: #1e293b; margin-bottom: 1rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.025em;">Impostazioni Pagina</h4>
+            <div class="checkbox-group">
+                <input type="checkbox" id="set-homepage" />
+                <label for="set-homepage">Imposta come homepage</label>
+            </div>
+        </div>
+
         <div class="builder-actions">
+            <button id="publish-btn" class="btn-publish">
+                <span>📤</span> Pubblica Pagina
+            </button>
             <button id="save-btn" class="btn-save">
                 <span>💾</span> Salva Pagina
             </button>
@@ -287,6 +384,22 @@
     let activeBlockIndex = null;
     let currentView = 'desktop';
 
+    // Font Families Disponibili (con pesi supportati)
+    const fonts = {
+        roboto: { family: 'Roboto, sans-serif', weights: [300, 400, 500, 700] },
+        poppins: { family: 'Poppins, sans-serif', weights: [300, 400, 500, 700] },
+        inter: { family: 'Inter, sans-serif', weights: [300, 400, 500, 700] },
+        playfair: { family: '"Playfair Display", serif', weights: [400, 700] }
+    };
+
+    function getFontFamily(fontKey) {
+        return fonts[fontKey]?.family || fonts.roboto.family;
+    }
+
+    function getAvailableWeights(fontKey) {
+        return fonts[fontKey]?.weights || fonts.roboto.weights;
+    }
+
     // Inizializzazione Builder
     function init() {
         renderCanvas();
@@ -325,14 +438,32 @@
 
         // Salva
         document.getElementById('save-btn').addEventListener('click', savePage);
-    }
+
+        // Pubblica
+        document.getElementById('publish-btn').addEventListener('click', publishPage);
+
+        // Homepage checkbox
+        document.getElementById('set-homepage').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                setHomepage();
+            }
+        });
 
     function addBlock(type) {
         const newBlock = {
             type: type,
             content: { text: "Nuovo " + type },
             settings: {
-                desktop: { font_size: "18px", color: "#333333", padding: "10px", align: "left" },
+                desktop: { 
+                    font_family: "roboto",
+                    font_size: "18px",
+                    font_weight: "400",
+                    letter_spacing: "0px",
+                    word_spacing: "0px",
+                    color: "#333333",
+                    padding: "10px",
+                    align: "left"
+                },
                 tablet: {},
                 mobile: {}
             }
@@ -349,11 +480,16 @@
             div.className = 'block-item' + (activeBlockIndex === index ? ' active' : '');
             
             // Applica stili (prendendo dalla cascata Desktop -> Tablet -> Mobile se mancanti?)
-            // Per semplicità ora mostriamo solo anteprima base inline
             const styles = getStylesForView(block, currentView);
+            const fontFamily = getFontFamily(styles.font_family || 'roboto');
+            
             div.style.cssText = `
                 color: ${styles.color || '#333'};
+                font-family: ${fontFamily};
                 font-size: ${styles.font_size || '1rem'};
+                font-weight: ${styles.font_weight || '400'};
+                letter-spacing: ${styles.letter_spacing || '0px'};
+                word-spacing: ${styles.word_spacing || '0px'};
                 padding: ${styles.padding || '0'};
                 text-align: ${styles.align || 'left'};
             `;
@@ -434,12 +570,59 @@
         // Campi Stile
         const currentStyles = block.settings[currentView] || {};
 
+        // Font controls only for title/text blocks
+        if (block.type === 'title' || block.type === 'text') {
+            addStyleField('Font Family', 'font_family', 'select', currentStyles.font_family || 'roboto', Object.keys(fonts));
+            
+            const fontKey = currentStyles.font_family || 'roboto';
+            const weights = getAvailableWeights(fontKey);
+            addStyleField('Font Weight', 'font_weight', 'select', currentStyles.font_weight || '400', weights.map(String));
+            
+            addStyleFieldWithRange('Dimensione Font', 'font_size', currentStyles.font_size || '16px', 12, 72);
+            addStyleField('Letter Spacing', 'letter_spacing', 'text', currentStyles.letter_spacing || '0px');
+            addStyleField('Word Spacing', 'word_spacing', 'text', currentStyles.word_spacing || '0px');
+        }
+
         addStyleField('Colore Testo', 'color', 'color', currentStyles.color || '#333333');
-        addStyleField('Dimensione Font', 'font_size', 'text', currentStyles.font_size || '');
         addStyleField('Allineamento', 'align', 'select', currentStyles.align || 'left', ['left', 'center', 'right']);
         addStyleField('Padding', 'padding', 'text', currentStyles.padding || '');
 
         renderCanvas();
+    }
+
+    function addStyleFieldWithRange(label, prop, value, min, max) {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        
+        const l = document.createElement('label');
+        l.innerText = label;
+        div.appendChild(l);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'range-slider';
+        
+        // Extract numeric value
+        const numValue = parseInt(value) || min;
+        
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = min;
+        slider.max = max;
+        slider.value = numValue;
+        
+        const display = document.createElement('div');
+        display.className = 'range-value';
+        display.innerText = numValue + 'px';
+        
+        slider.oninput = (e) => {
+            display.innerText = e.target.value + 'px';
+            updateStyle(prop, e.target.value + 'px');
+        };
+        
+        wrapper.appendChild(slider);
+        wrapper.appendChild(display);
+        div.appendChild(wrapper);
+        fieldsContainer.appendChild(div);
     }
 
     function addStyleField(label, prop, type, value, options = []) {
@@ -492,11 +675,23 @@
             options.forEach(o => {
                 const opt = document.createElement('option');
                 opt.value = o;
-                opt.innerText = o;
+                // Pretty display names for fonts
+                if (prop === 'font_family') {
+                    const fontNames = { roboto: 'Roboto', poppins: 'Poppins', inter: 'Inter', playfair: 'Playfair Display' };
+                    opt.innerText = fontNames[o] || o;
+                } else {
+                    opt.innerText = o;
+                }
                 if (o === value) opt.selected = true;
                 input.appendChild(opt);
             });
-            input.onchange = (e) => updateStyle(prop, e.target.value);
+            input.onchange = (e) => {
+                updateStyle(prop, e.target.value);
+                // Se cambio font, aggiorna i weight disponibili
+                if (prop === 'font_family') {
+                    openSettings(activeBlockIndex);
+                }
+            };
             div.appendChild(input);
         } else {
             const input = document.createElement('input');
@@ -552,6 +747,48 @@
             const status = document.getElementById('save-status');
             status.style.display = 'block';
             setTimeout(() => status.style.display = 'none', 3000);
+        }
+    }
+
+    async function publishPage() {
+        if (!confirm('Sei sicuro di voler pubblicare questa pagina?')) return;
+
+        const res = await fetch(`/admin/cms/${pageId}/publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (res.ok) {
+            const status = document.getElementById('save-status');
+            status.innerText = 'Pagina pubblicata con successo!';
+            status.style.display = 'block';
+            status.style.background = '#10b981';
+            setTimeout(() => status.style.display = 'none', 3000);
+        } else {
+            alert('Errore nel pubblicare la pagina');
+        }
+    }
+
+    async function setHomepage() {
+        if (!confirm('Sei sicuro di voler impostare questa pagina come homepage?')) {
+            document.getElementById('set-homepage').checked = false;
+            return;
+        }
+
+        const res = await fetch(`/admin/cms/${pageId}/set-homepage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (res.ok) {
+            const status = document.getElementById('save-status');
+            status.innerText = 'Homepage impostata con successo!';
+            status.style.display = 'block';
+            status.style.background = '#10b981';
+            setTimeout(() => status.style.display = 'none', 3000);
+        } else {
+            alert('Errore nell\'impostare la homepage');
+            document.getElementById('set-homepage').checked = false;
         }
     }
 
