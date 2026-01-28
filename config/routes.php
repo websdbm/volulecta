@@ -34,6 +34,13 @@ return function (App $app) {
         $group->post('/cms/{id}/unpublish', \App\Application\Actions\Admin\Cms\UnpublishPageAction::class);
         $group->post('/cms/{id}/set-homepage', \App\Application\Actions\Admin\Cms\SetHomepageAction::class);
         $group->post('/cms/upload', \App\Application\Actions\Admin\Cms\CmsUploadAction::class);
+        
+        // API Keys
+        $group->get('/api-keys', \App\Application\Actions\Admin\ApiKeys\ListApiKeysAction::class);
+        $group->get('/api-keys/create', \App\Application\Actions\Admin\ApiKeys\SaveApiKeyAction::class);
+        $group->map(['GET', 'POST'], '/api-keys/edit/{id}', \App\Application\Actions\Admin\ApiKeys\SaveApiKeyAction::class);
+        $group->post('/api-keys/create', \App\Application\Actions\Admin\ApiKeys\SaveApiKeyAction::class);
+        $group->get('/api-keys/delete/{id}', \App\Application\Actions\Admin\ApiKeys\DeleteApiKeyAction::class);
     })->add(new \App\Application\Middleware\RoleMiddleware('admin'));
 
     // Bibliophile routes

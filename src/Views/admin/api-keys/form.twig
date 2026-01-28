@@ -1,0 +1,180 @@
+{% extends "layout.twig" %}
+
+{% block title %}{{ title }} - {{ app_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 2rem auto;
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .form-header {
+        margin-bottom: 2rem;
+    }
+    .form-header h2 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    .form-group label .required {
+        color: #e74c3c;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+        font-family: inherit;
+    }
+    .form-help {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-top: 0.25rem;
+    }
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+    }
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-primary {
+        background: #3498db;
+        color: white;
+    }
+    .btn-primary:hover {
+        background: #2980b9;
+    }
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background: #7f8c8d;
+    }
+    
+    .info-box {
+        background: #e8f4fd;
+        border-left: 4px solid #3498db;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        border-radius: 4px;
+    }
+    .info-box h4 {
+        margin: 0 0 0.5rem 0;
+        color: #2980b9;
+    }
+    .info-box p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #34495e;
+    }
+    .info-box ul {
+        margin: 0.5rem 0 0 1.5rem;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h2>{{ title }}</h2>
+        <a href="/admin/api-keys" style="color: #3498db; text-decoration: none;">&larr; Torna alla lista</a>
+    </div>
+
+    <div class="info-box">
+        <h4>💡 API Keys Disponibili</h4>
+        <p>Configura qui le chiavi API necessarie per il funzionamento della piattaforma:</p>
+        <ul>
+            <li><strong>tinymce</strong> - Editor WYSIWYG nel CMS Builder</li>
+            <li><strong>openai</strong> - Servizi AI per raccomandazioni</li>
+            <li><strong>amazon</strong> - API Amazon per ricerca libri</li>
+        </ul>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="key_name">Nome Chiave <span class="required">*</span></label>
+            <input type="text" id="key_name" name="key_name" class="form-control" 
+                   value="{{ api_key ? api_key.keyName : '' }}" 
+                   {{ api_key ? 'readonly' : '' }} required>
+            <div class="form-help">Nome tecnico (es: tinymce, openai, amazon) - non modificabile dopo la creazione</div>
+        </div>
+
+        <div class="form-group">
+            <label for="key_label">Etichetta <span class="required">*</span></label>
+            <input type="text" id="key_label" name="key_label" class="form-control" 
+                   value="{{ api_key ? api_key.keyLabel : '' }}" required>
+            <div class="form-help">Nome descrittivo visualizzato nell'interfaccia</div>
+        </div>
+
+        <div class="form-group">
+            <label for="key_value">Valore API Key <span class="required">*</span></label>
+            <textarea id="key_value" name="key_value" class="form-control" required>{{ api_key ? api_key.keyValue : '' }}</textarea>
+            <div class="form-help">Il valore della chiave API fornito dal servizio</div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Descrizione</label>
+            <textarea id="description" name="description" class="form-control">{{ api_key ? api_key.description : '' }}</textarea>
+            <div class="form-help">Note opzionali su questa API key</div>
+        </div>
+
+        <div class="form-group">
+            <div class="checkbox-group">
+                <input type="checkbox" id="is_active" name="is_active" {{ (api_key and api_key.isActive) or not api_key ? 'checked' : '' }}>
+                <label for="is_active">API Key attiva</label>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salva</button>
+            <a href="/admin/api-keys" class="btn btn-secondary">Annulla</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

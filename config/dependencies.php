@@ -69,6 +69,10 @@ return function (ContainerBuilder $containerBuilder) {
             return new \App\Infrastructure\Persistence\PdoCmsRepository($c->get(PDO::class));
         },
 
+        \App\Domain\Repositories\ApiKeyRepositoryInterface::class => function (ContainerInterface $c) {
+            return new \App\Infrastructure\Persistence\PdoApiKeyRepository($c->get(PDO::class));
+        },
+
         // Services
         \App\Application\Services\AuthService::class => function (ContainerInterface $c) {
             return new \App\Application\Services\AuthService($c->get(\App\Domain\Repositories\UserRepositoryInterface::class));
