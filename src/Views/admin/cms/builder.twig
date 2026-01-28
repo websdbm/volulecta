@@ -3,7 +3,6 @@
 {% block title %}{{ title }} - {{ app_name }}{% endblock %}
 
 {% block styles %}
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <style>
     body { background: #f8f9fa; overflow: hidden; }
     /* Override main layout constraints for the builder */
@@ -337,6 +336,7 @@
 {% endblock %}
 
 {% block content %}
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <div class="builder-layout">
     <!-- Sidebar: Blocchi Disponibili -->
     <div class="builder-sidebar">
@@ -632,8 +632,18 @@
             textarea.style.minHeight = '200px';
             contentGroup.appendChild(textarea);
 
-            // Inizializza TinyMCE dopo che l'elemento è nel DOM
+            // Inizializza TinyMCE dopo che l'elemento è nel DOM e TinyMCE è caricato
             setTimeout(() => {
+                if (typeof tinymce === 'undefined') {
+                    console.error('TinyMCE non è ancora caricato');
+                    // Fallback: usa textarea normale
+                    textarea.oninput = (e) => {
+                        block.content.text = e.target.value;
+                        renderCanvas();
+                    };
+                    return;
+                }
+                
                 tinymce.init({
                     selector: '#' + textareaId,
                     menubar: false,
@@ -641,13 +651,13 @@
                     toolbar: 'undo redo | formatselect | bold italic | bullist numlist | link image',
                     height: 250,
                     setup: function(editor) {
-                        editor.on('change', function() {
+                        editor.on('change keyup', function() {
                             block.content.text = editor.getContent();
                             renderCanvas();
                         });
                     }
                 });
-            }, 0);
+            }, 100);
         }
         fieldsContainer.appendChild(contentGroup);
 
