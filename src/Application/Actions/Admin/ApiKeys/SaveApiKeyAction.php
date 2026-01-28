@@ -8,12 +8,12 @@ use App\Domain\Entities\ApiKey;
 use App\Domain\Repositories\ApiKeyRepositoryInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Twig\Environment;
+use Slim\Views\Twig;
 
 class SaveApiKeyAction
 {
     public function __construct(
-        private Environment $twig,
+        private Twig $twig,
         private ApiKeyRepositoryInterface $apiKeyRepository
     ) {
     }
@@ -44,12 +44,9 @@ class SaveApiKeyAction
         // GET: mostra form
         $apiKey = $id ? $this->apiKeyRepository->findById($id) : null;
 
-        $html = $this->twig->render('admin/api-keys/form.twig', [
+        return $this->twig->render($response, 'admin/api-keys/form.twig', [
             'title' => $id ? 'Modifica API Key' : 'Nuova API Key',
             'api_key' => $apiKey
         ]);
-
-        $response->getBody()->write($html);
-        return $response;
     }
 }

@@ -7,12 +7,12 @@ namespace App\Application\Actions\Admin\ApiKeys;
 use App\Domain\Repositories\ApiKeyRepositoryInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Twig\Environment;
+use Slim\Views\Twig;
 
 class ListApiKeysAction
 {
     public function __construct(
-        private Environment $twig,
+        private Twig $twig,
         private ApiKeyRepositoryInterface $apiKeyRepository
     ) {
     }
@@ -21,12 +21,9 @@ class ListApiKeysAction
     {
         $apiKeys = $this->apiKeyRepository->findAll();
 
-        $html = $this->twig->render('admin/api-keys/list.twig', [
+        return $this->twig->render($response, 'admin/api-keys/list.twig', [
             'title' => 'Gestione API Keys',
             'api_keys' => $apiKeys
         ]);
-
-        $response->getBody()->write($html);
-        return $response;
     }
 }
