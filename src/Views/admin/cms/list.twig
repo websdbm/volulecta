@@ -97,14 +97,19 @@
     .btn-action.btn-delete { background: #e74c3c; }
     .btn-action.btn-delete:hover { background: #c0392b; }
     .home-badge {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         background: #8e44ad;
         color: white;
-        padding: 0.3rem 0.6rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
         margin-left: 0.5rem;
         font-weight: 600;
+        box-sizing: border-box;
+        min-height: 36px;
+        line-height: 1.2;
     }
 </style>
 {% endblock %}
