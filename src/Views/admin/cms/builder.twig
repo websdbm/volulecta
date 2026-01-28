@@ -332,6 +332,68 @@
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
+
+    /* Hero Block Styles */
+    .hero-block-preview {
+        display: flex;
+        gap: 20px;
+        align-items: stretch;
+        width: 100%;
+    }
+    .hero-block-preview.image-left {
+        flex-direction: row;
+    }
+    .hero-block-preview.image-right {
+        flex-direction: row-reverse;
+    }
+    .hero-block-preview.image-top {
+        flex-direction: column;
+    }
+    .hero-block-preview.image-bottom {
+        flex-direction: column-reverse;
+    }
+    
+    .hero-image {
+        flex: 1;
+        min-width: 0;
+        border-radius: 4px;
+        object-fit: cover;
+    }
+    
+    .hero-text-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .hero-title {
+        margin: 0 0 15px 0;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        margin: 0 0 20px 0;
+        line-height: 1.5;
+    }
+    
+    .hero-button {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+        width: fit-content;
+    }
+    
+    .hero-button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
 </style>
 {% endblock %}
 
@@ -353,6 +415,10 @@
             <div class="tool-item" data-type="image" style="padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 0.75rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
                 <span style="font-size: 1.5rem;">🖼️</span> 
                 <span style="font-weight: 600; color: #475569;">Immagine</span>
+            </div>
+            <div class="tool-item" data-type="hero" style="padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 0.75rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                <span style="font-size: 1.5rem;">🦸</span> 
+                <span style="font-weight: 600; color: #475569;">Hero Section</span>
             </div>
         </div>
         <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
@@ -512,24 +578,72 @@
     }
 
     function addBlock(type) {
-        const newBlock = {
-            type: type,
-            content: { text: "Nuovo " + type },
-            settings: {
-                desktop: { 
-                    font_family: "roboto",
-                    font_size: "18px",
-                    font_weight: "400",
-                    letter_spacing: "0px",
-                    word_spacing: "0px",
-                    color: "#333333",
-                    padding: "10px",
-                    align: "left"
+        let newBlock = {};
+        
+        if (type === 'hero') {
+            newBlock = {
+                type: 'hero',
+                content: {
+                    title: "Titolo Hero",
+                    subtitle: "Sottotitolo opzionale",
+                    buttonText: "Clicca qui",
+                    buttonLink: "#",
+                    imageUrl: "https://via.placeholder.com/600x400?text=Scegli+Immagine",
+                    imagePosition: "right" // left, right, top, bottom
                 },
-                tablet: {},
-                mobile: {}
-            }
-        };
+                settings: {
+                    desktop: {
+                        title_font_family: "roboto",
+                        title_font_size: "48px",
+                        title_font_weight: "700",
+                        title_letter_spacing: "0px",
+                        title_color: "#000000",
+                        title_align: "left",
+                        title_show: true,
+                        
+                        subtitle_font_family: "roboto",
+                        subtitle_font_size: "18px",
+                        subtitle_font_weight: "400",
+                        subtitle_letter_spacing: "0px",
+                        subtitle_color: "#666666",
+                        subtitle_align: "left",
+                        subtitle_show: true,
+                        
+                        button_font_family: "roboto",
+                        button_font_size: "16px",
+                        button_font_weight: "600",
+                        button_color: "#ffffff",
+                        button_bg_color: "#ff9800",
+                        button_show: true,
+                        
+                        padding: "40px",
+                        image_gap: "40px"
+                    },
+                    tablet: {},
+                    mobile: {}
+                }
+            };
+        } else {
+            newBlock = {
+                type: type,
+                content: { text: "Nuovo " + type },
+                settings: {
+                    desktop: { 
+                        font_family: "roboto",
+                        font_size: "18px",
+                        font_weight: "400",
+                        letter_spacing: "0px",
+                        word_spacing: "0px",
+                        color: "#333333",
+                        padding: "10px",
+                        align: "left"
+                    },
+                    tablet: {},
+                    mobile: {}
+                }
+            };
+        }
+        
         blocks.push(newBlock);
         renderCanvas();
         openSettings(blocks.length - 1);
@@ -575,6 +689,39 @@
             const url = block.content.url || 'https://via.placeholder.com/600x300?text=Scegli+Immagine';
             return `<img src="${url}" style="max-width: 100%; display: block; border-radius: 4px;">`;
         }
+        if (block.type === 'hero') {
+            const content = block.content;
+            const styles = getStylesForView(block, 'desktop');
+            const imageUrl = content.imageUrl || 'https://via.placeholder.com/600x400?text=Immagine';
+            
+            const textBlock = `
+                <div style="flex: 1;">
+                    ${content.title ? `<h2 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700; color: #000;">${content.title}</h2>` : ''}
+                    ${content.subtitle ? `<p style="margin: 0 0 20px 0; font-size: 16px; color: #666;">${content.subtitle}</p>` : ''}
+                    ${content.buttonText ? `<a href="${content.buttonLink}" style="display: inline-block; padding: 10px 20px; background-color: #ff9800; color: white; border-radius: 4px; text-decoration: none; font-weight: 600;">${content.buttonText}</a>` : ''}
+                </div>
+            `;
+            
+            const imgBlock = `<img src="${imageUrl}" style="flex: 1; max-width: 100%; border-radius: 4px;">`;
+            
+            let layout = imgBlock + textBlock;
+            if (content.imagePosition === 'left' || content.imagePosition === 'right') {
+                layout = content.imagePosition === 'right' ? textBlock + imgBlock : imgBlock + textBlock;
+            } else if (content.imagePosition === 'top') {
+                layout = imgBlock + textBlock;
+            } else if (content.imagePosition === 'bottom') {
+                layout = textBlock + imgBlock;
+            }
+            
+            const flexDir = (content.imagePosition === 'left' || content.imagePosition === 'right') ? 'row' : 'column';
+            const flexWrap = (content.imagePosition === 'left' || content.imagePosition === 'right') ? 'nowrap' : 'wrap';
+            
+            return `
+                <div style="display: flex; flex-direction: ${flexDir}; gap: 20px; align-items: center;">
+                    ${layout}
+                </div>
+            `;
+        }
         return `<div style="min-height: 1.2em;">${block.content.text || '(Vuoto)'}</div>`;
     }
 
@@ -598,6 +745,217 @@
         
         fieldsContainer.innerHTML = '';
         
+        // HERO BLOCK SPECIAL HANDLING
+        if (block.type === 'hero') {
+            // Sezione Contenuto
+            const contentSection = document.createElement('div');
+            contentSection.innerHTML = '<h4 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; font-weight: 600; color: #555;">📝 Contenuto</h4>';
+            fieldsContainer.appendChild(contentSection);
+            
+            // Titolo
+            const titleGroup = document.createElement('div');
+            titleGroup.className = 'form-group';
+            const titleLabel = document.createElement('label');
+            titleLabel.innerText = 'Titolo';
+            const titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.className = 'form-control';
+            titleInput.value = block.content.title || '';
+            titleInput.oninput = (e) => {
+                block.content.title = e.target.value;
+                renderCanvas();
+            };
+            titleGroup.appendChild(titleLabel);
+            titleGroup.appendChild(titleInput);
+            fieldsContainer.appendChild(titleGroup);
+            
+            // Sottotitolo con toggle
+            const subtitleGroup = document.createElement('div');
+            subtitleGroup.className = 'form-group';
+            const subtitleLabel = document.createElement('label');
+            subtitleLabel.style.display = 'flex';
+            subtitleLabel.style.alignItems = 'center';
+            subtitleLabel.style.gap = '8px';
+            const subtitleCheckbox = document.createElement('input');
+            subtitleCheckbox.type = 'checkbox';
+            subtitleCheckbox.checked = block.content.subtitle ? true : false;
+            subtitleCheckbox.onchange = (e) => {
+                const currentVal = block.content.subtitle;
+                block.content.subtitle = e.target.checked ? (currentVal || 'Sottotitolo opzionale') : '';
+                renderCanvas();
+            };
+            subtitleLabel.appendChild(subtitleCheckbox);
+            subtitleLabel.appendChild(document.createTextNode('Mostra Sottotitolo'));
+            subtitleGroup.appendChild(subtitleLabel);
+            
+            if (block.content.subtitle) {
+                const subtitleInput = document.createElement('textarea');
+                subtitleInput.className = 'form-control';
+                subtitleInput.style.minHeight = '60px';
+                subtitleInput.value = block.content.subtitle || '';
+                subtitleInput.oninput = (e) => {
+                    block.content.subtitle = e.target.value;
+                    renderCanvas();
+                };
+                subtitleGroup.appendChild(subtitleInput);
+            }
+            fieldsContainer.appendChild(subtitleGroup);
+            
+            // Immagine
+            const imageGroup = document.createElement('div');
+            imageGroup.className = 'form-group';
+            const imageLabel = document.createElement('label');
+            imageLabel.innerText = 'Immagine';
+            const imageInput = document.createElement('input');
+            imageInput.type = 'text';
+            imageInput.className = 'form-control';
+            imageInput.value = block.content.imageUrl || '';
+            imageInput.oninput = (e) => {
+                block.content.imageUrl = e.target.value;
+                renderCanvas();
+            };
+            imageGroup.appendChild(imageLabel);
+            imageGroup.appendChild(imageInput);
+            
+            const uploadBtn = document.createElement('input');
+            uploadBtn.type = 'file';
+            uploadBtn.style.marginTop = '10px';
+            uploadBtn.style.fontSize = '0.8rem';
+            uploadBtn.onchange = (e) => handleUpload(e, index);
+            imageGroup.appendChild(uploadBtn);
+            fieldsContainer.appendChild(imageGroup);
+            
+            // Posizionamento Immagine
+            const posGroup = document.createElement('div');
+            posGroup.className = 'form-group';
+            const posLabel = document.createElement('label');
+            posLabel.innerText = 'Posizione Immagine';
+            const posSelect = document.createElement('select');
+            posSelect.className = 'form-control';
+            const positions = [
+                { value: 'left', label: '⬅️ Sinistra (testo destra)' },
+                { value: 'right', label: '➡️ Destra (testo sinistra)' },
+                { value: 'top', label: '⬆️ Sopra (testo sotto)' },
+                { value: 'bottom', label: '⬇️ Sotto (testo sopra)' }
+            ];
+            positions.forEach(pos => {
+                const opt = document.createElement('option');
+                opt.value = pos.value;
+                opt.innerText = pos.label;
+                opt.selected = block.content.imagePosition === pos.value;
+                posSelect.appendChild(opt);
+            });
+            posSelect.oninput = (e) => {
+                block.content.imagePosition = e.target.value;
+                renderCanvas();
+            };
+            posGroup.appendChild(posLabel);
+            posGroup.appendChild(posSelect);
+            fieldsContainer.appendChild(posGroup);
+            
+            // Bottone con toggle
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'form-group';
+            const buttonLabel = document.createElement('label');
+            buttonLabel.style.display = 'flex';
+            buttonLabel.style.alignItems = 'center';
+            buttonLabel.style.gap = '8px';
+            const buttonCheckbox = document.createElement('input');
+            buttonCheckbox.type = 'checkbox';
+            buttonCheckbox.checked = block.content.buttonText ? true : false;
+            buttonCheckbox.onchange = (e) => {
+                const currentVal = block.content.buttonText;
+                block.content.buttonText = e.target.checked ? (currentVal || 'Clicca qui') : '';
+                renderCanvas();
+            };
+            buttonLabel.appendChild(buttonCheckbox);
+            buttonLabel.appendChild(document.createTextNode('Mostra Bottone'));
+            buttonGroup.appendChild(buttonLabel);
+            
+            if (block.content.buttonText) {
+                const buttonTextInput = document.createElement('input');
+                buttonTextInput.type = 'text';
+                buttonTextInput.className = 'form-control';
+                buttonTextInput.placeholder = 'Testo bottone';
+                buttonTextInput.value = block.content.buttonText || '';
+                buttonTextInput.oninput = (e) => {
+                    block.content.buttonText = e.target.value;
+                    renderCanvas();
+                };
+                buttonGroup.appendChild(buttonTextInput);
+                
+                const buttonLinkInput = document.createElement('input');
+                buttonLinkInput.type = 'text';
+                buttonLinkInput.className = 'form-control';
+                buttonLinkInput.placeholder = 'Link bottone (es: #, /pagina, https://...)';
+                buttonLinkInput.value = block.content.buttonLink || '';
+                buttonLinkInput.oninput = (e) => {
+                    block.content.buttonLink = e.target.value;
+                    renderCanvas();
+                };
+                buttonGroup.appendChild(buttonLinkInput);
+            }
+            fieldsContainer.appendChild(buttonGroup);
+            
+            fieldsContainer.appendChild(document.createElement('hr'));
+            
+            // Sezione Styling
+            const styleSection = document.createElement('div');
+            styleSection.innerHTML = '<h4 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; font-weight: 600; color: #555;">🎨 Stile - Titolo</h4>';
+            fieldsContainer.appendChild(styleSection);
+            
+            const currentStyles = block.settings[currentView] || {};
+            
+            // Titolo styling
+            addStyleField('Font Family Titolo', 'title_font_family', 'select', currentStyles.title_font_family || 'roboto', Object.keys(fonts));
+            const titleFontKey = currentStyles.title_font_family || 'roboto';
+            const titleWeights = getAvailableWeights(titleFontKey);
+            addStyleField('Font Weight Titolo', 'title_font_weight', 'select', currentStyles.title_font_weight || '700', titleWeights.map(String));
+            addStyleFieldWithRange('Dimensione Titolo', 'title_font_size', currentStyles.title_font_size || '48px', 24, 96);
+            addStyleField('Letter Spacing Titolo', 'title_letter_spacing', 'text', currentStyles.title_letter_spacing || '0px');
+            addStyleField('Colore Titolo', 'title_color', 'color', currentStyles.title_color || '#000000');
+            addStyleField('Allineamento Titolo', 'title_align', 'select', currentStyles.title_align || 'left', ['left', 'center', 'right']);
+            
+            // Sottotitolo styling
+            const subtitleStyleSection = document.createElement('div');
+            subtitleStyleSection.innerHTML = '<h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 14px; font-weight: 600; color: #555;">🎨 Stile - Sottotitolo</h4>';
+            fieldsContainer.appendChild(subtitleStyleSection);
+            
+            addStyleField('Font Family Sottotitolo', 'subtitle_font_family', 'select', currentStyles.subtitle_font_family || 'roboto', Object.keys(fonts));
+            const subtitleFontKey = currentStyles.subtitle_font_family || 'roboto';
+            const subtitleWeights = getAvailableWeights(subtitleFontKey);
+            addStyleField('Font Weight Sottotitolo', 'subtitle_font_weight', 'select', currentStyles.subtitle_font_weight || '400', subtitleWeights.map(String));
+            addStyleFieldWithRange('Dimensione Sottotitolo', 'subtitle_font_size', currentStyles.subtitle_font_size || '18px', 12, 48);
+            addStyleField('Letter Spacing Sottotitolo', 'subtitle_letter_spacing', 'text', currentStyles.subtitle_letter_spacing || '0px');
+            addStyleField('Colore Sottotitolo', 'subtitle_color', 'color', currentStyles.subtitle_color || '#666666');
+            addStyleField('Allineamento Sottotitolo', 'subtitle_align', 'select', currentStyles.subtitle_align || 'left', ['left', 'center', 'right']);
+            
+            // Bottone styling
+            const buttonStyleSection = document.createElement('div');
+            buttonStyleSection.innerHTML = '<h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 14px; font-weight: 600; color: #555;">🎨 Stile - Bottone</h4>';
+            fieldsContainer.appendChild(buttonStyleSection);
+            
+            addStyleField('Font Family Bottone', 'button_font_family', 'select', currentStyles.button_font_family || 'roboto', Object.keys(fonts));
+            const buttonFontKey = currentStyles.button_font_family || 'roboto';
+            const buttonWeights = getAvailableWeights(buttonFontKey);
+            addStyleField('Font Weight Bottone', 'button_font_weight', 'select', currentStyles.button_font_weight || '600', buttonWeights.map(String));
+            addStyleFieldWithRange('Dimensione Bottone', 'button_font_size', currentStyles.button_font_size || '16px', 12, 32);
+            addStyleField('Colore Testo Bottone', 'button_color', 'color', currentStyles.button_color || '#ffffff');
+            addStyleField('Colore Sfondo Bottone', 'button_bg_color', 'color', currentStyles.button_bg_color || '#ff9800');
+            
+            // Layout styling
+            const layoutStyleSection = document.createElement('div');
+            layoutStyleSection.innerHTML = '<h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 14px; font-weight: 600; color: #555;">⚙️ Layout</h4>';
+            fieldsContainer.appendChild(layoutStyleSection);
+            
+            addStyleField('Padding', 'padding', 'text', currentStyles.padding || '40px');
+            addStyleField('Gap tra elementi', 'image_gap', 'text', currentStyles.image_gap || '40px');
+            
+            renderCanvas();
+            return;
+        }
+        
+        // CONTENUTO PER ALTRI BLOCCHI (image, text, title)
         // Campi Contenuto
         const contentGroup = document.createElement('div');
         contentGroup.className = 'form-group';
