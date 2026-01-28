@@ -24,6 +24,15 @@ class UnpublishPageAction
             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
         }
 
+        // Non permettere di mettere in bozza una homepage (come WordPress)
+        if ($page->isHomepage()) {
+            $response->getBody()->write(json_encode([
+                'status' => 'error',
+                'message' => 'Non è possibile mettere in bozza la homepage. Imposta prima un\'altra pagina come homepage.'
+            ]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+
         // Crea una nuova istanza con status = 'draft'
         $draftPage = new \App\Domain\Entities\CmsPage(
             $page->getId(),

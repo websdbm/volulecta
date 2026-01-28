@@ -211,6 +211,24 @@
     .btn-publish:hover { background: #059669; transform: translateY(-1px); }
     .btn-publish:active { transform: translateY(0); }
 
+    .btn-draft {
+        padding: 0.8rem;
+        background: #f39c12;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .btn-draft:hover { background: #e67e22; transform: translateY(-1px); }
+    .btn-draft:active { transform: translateY(0); }
+
     .btn-preview {
         padding: 0.8rem;
         background: #8b5cf6;
@@ -349,8 +367,8 @@
         </div>
 
         <div class="builder-actions">
-            <button id="publish-btn" class="btn-publish">
-                <span>📤</span> Pubblica Pagina
+            <button id="publish-btn" class="btn-publish" data-status="{{ page.status }}" data-is-homepage="{{ page.isHomepage ? '1' : '0' }}">
+                <span id="publish-icon">📤</span> <span id="publish-text">{{ page.status == 'published' ? 'Metti in Bozza' : 'Pubblica Pagina' }}</span>
             </button>
             <button id="save-btn" class="btn-save">
                 <span>💾</span> Salva Pagina
@@ -398,6 +416,8 @@
 <script>
     const pageId = {{ page.id }};
     const pageSlug = '{{ page.slug }}';
+    let pageStatus = '{{ page.status }}';
+    let isHomepage = {{ page.isHomepage ? 'true' : 'false' }};
     const canvas = document.getElementById('canvas');
     const settingsForm = document.getElementById('settings-form');
     const settingsBlank = document.getElementById('settings-blank');
@@ -429,6 +449,20 @@
 
     // Inizializzazione Builder
     function init() {
+        // Aggiorna classe pulsante publish in base allo stato
+        const publishBtn = document.getElementById('publish-btn');
+        if (pageStatus === 'published') {
+            publishBtn.classList.remove('btn-publish');
+            publishBtn.classList.add('btn-draft');
+        }
+        
+        // Disabilita il checkbox homepage se la pagina è già homepage
+        const homepageCheckbox = document.getElementById('set-homepage');
+        if (isHomepage) {
+            homepageCheckbox.checked = true;
+            homepageCheckbox.disabled = true;
+        }
+        
         renderCanvas();
         
         // Drag and Drop (Sortable)
@@ -803,21 +837,69 @@
     }
 
     async function publishPage() {
-        if (!confirm('Sei sicuro di voler pubblicare questa pagina?')) return;
-
-        const res = await fetch(`/admin/cms/${pageId}/publish`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
+        const publishBtn = document.getElementById('publish-btn');
+        const publishText = document.getElementById('publish-text');
+        const publishIcon = document.getElementById('publish-icon');
         
-        if (res.ok) {
-            const status = document.getElementById('save-status');
-            status.innerText = 'Pagina pubblicata con successo!';
-            status.style.display = 'block';
-            status.style.background = '#10b981';
-            setTimeout(() => status.style.display = 'none', 3000);
+        if (pageStatus === 'published') {
+            // Metti in bozza
+            if (isHomepage) {
+                alert('Non è possibile mettere in bozza la homepage. Imposta prima un\'altra pagina come homepage.');
+                return;
+            }
+            
+            if (!confirm('Sei sicuro di voler mettere questa pagina in bozza?')) return;
+
+            const res = await fetch(`/admin/cms/${pageId}/unpublish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === 'success') {
+                    pageStatus = 'draft';
+                    publishText.innerText = 'Pubblica Pagina';
+                    publishIcon.innerText = '📤';
+                    publishBtn.classList.remove('btn-draft');
+                    publishBtn.classList.add('btn-publish');
+                    
+                    const status = document.getElementById('save-status');
+                    status.innerText = 'Pagina messa in bozza!';
+                    status.style.display = 'block';
+                    status.style.background = '#f39c12';
+                    setTimeout(() => status.style.display = 'none', 3000);
+                } else {
+                    alert(data.message || 'Errore');
+                }
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Errore nel mettere in bozza la pagina');
+            }
         } else {
-            alert('Errore nel pubblicare la pagina');
+            // Pubblica
+            if (!confirm('Sei sicuro di voler pubblicare questa pagina?')) return;
+
+            const res = await fetch(`/admin/cms/${pageId}/publish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (res.ok) {
+                pageStatus = 'published';
+                publishText.innerText = 'Metti in Bozza';
+                publishIcon.innerText = '📋';
+                publishBtn.classList.remove('btn-publish');
+                publishBtn.classList.add('btn-draft');
+                
+                const status = document.getElementById('save-status');
+                status.innerText = 'Pagina pubblicata con successo!';
+                status.style.display = 'block';
+                status.style.background = '#10b981';
+                setTimeout(() => status.style.display = 'none', 3000);
+            } else {
+                alert('Errore nel pubblicare la pagina');
+            }
         }
     }
 

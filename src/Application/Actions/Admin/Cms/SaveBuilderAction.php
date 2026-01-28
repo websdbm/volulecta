@@ -39,8 +39,9 @@ class SaveBuilderAction
             $page->getSeoDescription(),
             $page->getStatus(),
             $page->getPublishedAt(),
+            $page->isHomepage(),
             $page->getCreatedAt(),
-            $page->getUpdatedAt()
+            date('Y-m-d H:i:s')
         );
 
         $this->cmsRepository->save($updatedPage);

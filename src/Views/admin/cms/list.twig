@@ -51,48 +51,44 @@
         flex-wrap: wrap;
         align-items: center;
     }
-    .btn-edit { color: #3498db; text-decoration: none; font-weight: 600; }
-    .btn-delete { color: #e74c3c; text-decoration: none; font-weight: 600; }
     .btn-action {
-        padding: 0.3rem 0.7rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        background: #3498db;
+        color: white;
         cursor: pointer;
         font-size: 0.85rem;
+        font-weight: 600;
         transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
     }
-    .btn-publish {
-        color: #27ae60;
-        border-color: #27ae60;
+    .btn-action:hover { 
+        background: #2980b9;
+        transform: translateY(-1px);
     }
-    .btn-publish:hover { background: #dcfce7; }
-    .btn-draft {
-        color: #f39c12;
-        border-color: #f39c12;
-    }
-    .btn-draft:hover { background: #fef9c3; }
-    .btn-homepage {
-        color: #8e44ad;
-        border-color: #8e44ad;
-    }
-    .btn-homepage:hover { background: #f3e5f5; }
+    .btn-action.btn-builder { background: #3498db; }
+    .btn-action.btn-preview { background: #9b59b6; }
+    .btn-action.btn-preview:hover { background: #8e44ad; }
+    .btn-action.btn-publish { background: #27ae60; }
+    .btn-action.btn-publish:hover { background: #229954; }
+    .btn-action.btn-draft { background: #f39c12; }
+    .btn-action.btn-draft:hover { background: #e67e22; }
+    .btn-action.btn-homepage { background: #8e44ad; }
+    .btn-action.btn-homepage:hover { background: #7d3c98; }
+    .btn-action.btn-delete { background: #e74c3c; }
+    .btn-action.btn-delete:hover { background: #c0392b; }
     .home-badge {
         display: inline-block;
         background: #8e44ad;
         color: white;
-        padding: 0.2rem 0.5rem;
+        padding: 0.3rem 0.6rem;
         border-radius: 4px;
         font-size: 0.75rem;
         margin-left: 0.5rem;
+        font-weight: 600;
     }
-    .btn-preview {
-        color: #8b5cf6;
-        border-color: #8b5cf6;
-        text-decoration: none;
-        display: inline-block;
-    }
-    .btn-preview:hover { background: #f3e5f5; }
 </style>
 {% endblock %}
 
@@ -129,19 +125,21 @@
                     {% if page.isHomepage %}<span class="home-badge">🏠 Homepage</span>{% endif %}
                 </td>
                 <td class="actions">
-                    <a href="/admin/cms/builder/{{ page.id }}" class="btn-edit">Builder 🎨</a>
-                    <a href="/p/{{ page.slug }}" class="btn-preview" target="_blank">👁️ Visualizza</a>
+                    <a href="/admin/cms/builder/{{ page.id }}" class="btn-action btn-builder">Modifica</a>
+                    <a href="/p/{{ page.slug }}" class="btn-action btn-preview" target="_blank">Anteprima</a>
                     {% if page.status == 'published' %}
-                        <button class="btn-action btn-draft" onclick="setPageStatus({{ page.id }}, 'draft')">Bozza</button>
+                        {% if page.isHomepage %}
+                            <button class="btn-action btn-draft" style="opacity: 0.5; cursor: not-allowed;" disabled title="Non è possibile mettere in bozza la homepage">Pubblicata</button>
+                        {% else %}
+                            <button class="btn-action btn-draft" onclick="unpublishPage({{ page.id }})">Metti in Bozza</button>
+                        {% endif %}
                     {% else %}
                         <button class="btn-action btn-publish" onclick="publishPage({{ page.id }})">Pubblica</button>
                     {% endif %}
                     {% if not page.isHomepage %}
-                        <button class="btn-action btn-homepage" onclick="setHomepage({{ page.id }});">🏠 Homepage</button>
-                    {% else %}
-                        <span style="color: #8e44ad; font-weight: 600;">✓ Homepage</span>
+                        <button class="btn-action btn-homepage" onclick="setHomepage({{ page.id }})">Imposta Homepage</button>
                     {% endif %}
-                    <a href="/admin/cms/delete/{{ page.id }}" class="btn-delete" onclick="return confirm('Sicuro di voler eliminare questa pagina?')">Elimina</a>
+                    <a href="/admin/cms/delete/{{ page.id }}" class="btn-action btn-delete" onclick="return confirm('Sicuro di voler eliminare questa pagina?')">Elimina</a>
                 </td>
             </tr>
             {% else %}
@@ -176,8 +174,8 @@
         }
     }
 
-    async function setPageStatus(pageId, status) {
-        if (!confirm(`Sei sicuro di voler impostare questa pagina come ${status}?`)) return;
+    async function unpublishPage(pageId) {
+        if (!confirm('Sei sicuro di voler mettere questa pagina in bozza?')) return;
 
         try {
             const res = await fetch(`/admin/cms/${pageId}/unpublish`, {
@@ -186,10 +184,16 @@
             });
             
             if (res.ok) {
-                alert(`Pagina impostata come ${status} con successo!`);
-                window.location.reload();
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert('Pagina messa in bozza con successo!');
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Errore nell\'aggiornare lo stato della pagina');
+                }
             } else {
-                alert('Errore nell\'aggiornare lo stato della pagina');
+                const data = await res.json();
+                alert(data.message || 'Errore nell\'aggiornare lo stato della pagina');
             }
         } catch (err) {
             alert('Errore: ' + err.message);
