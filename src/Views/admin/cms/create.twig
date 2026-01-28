@@ -1,0 +1,103 @@
+{% extends "layout.twig" %}
+
+{% block title %}{{ title }} - {{ app_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .cms-form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+    .btn-submit {
+        padding: 0.75rem 1.5rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+    }
+    .btn-submit:hover { background: #2980b9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cms-form-container">
+    <h2>{{ title }}</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="title">Titolo della Pagina</label>
+            <input type="text" id="title" name="title" class="form-control" placeholder="es. Chi Siamo" required autofocus>
+        </div>
+        
+        <div class="form-group">
+            <label for="slug">Slug (URL)</label>
+            <input type="text" id="slug" name="slug" class="form-control" placeholder="es. chi-siamo" required>
+            <small style="color: #7f8c8d;">L'URL della pagina sarà /p/slug</small>
+        </div>
+
+        <div class="form-group">
+            <label for="template">Template</label>
+            <select id="template" name="template" class="form-control">
+                <option value="interna">Pagina Interna (Standard)</option>
+                <option value="homepage">Homepage</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Stato iniziale</label>
+            <select id="status" name="status" class="form-control">
+                <option value="draft">Bozza</option>
+                <option value="published">Pubblicata</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-submit">Crea Pagina ed entra nel Builder</button>
+        <div style="margin-top: 1rem; text-align: center;">
+            <a href="/admin/cms" style="color: #7f8c8d; text-decoration: none;">Annulla</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Auto-generate slug from title
+    const titleInput = document.getElementById('title');
+    const slugInput = document.getElementById('slug');
+
+    titleInput.addEventListener('input', () => {
+        if (!slugInput.dataset.edited) {
+            slugInput.value = titleInput.value
+                .toLowerCase()
+                .trim()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/[\s_-]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
+    });
+
+    slugInput.addEventListener('input', () => {
+        slugInput.dataset.edited = true;
+    });
+</script>
+{% endblock %}

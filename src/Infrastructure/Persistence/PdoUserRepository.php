@@ -40,6 +40,16 @@ class PdoUserRepository implements UserRepositoryInterface
         return $this->mapToEntity($data);
     }
 
+    public function findAll(): array
+    {
+        $stmt = $this->db->query('SELECT * FROM users ORDER BY created_at DESC');
+        $users = [];
+        while ($data = $stmt->fetch()) {
+            $users[] = $this->mapToEntity($data);
+        }
+        return $users;
+    }
+
     public function save(User $user): User
     {
         if ($user->getId() === null) {

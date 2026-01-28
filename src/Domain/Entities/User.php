@@ -66,6 +66,13 @@ class User implements JsonSerializable
         return $this->updatedAt;
     }
 
+    public function withRole(string $role): self
+    {
+        $new = clone $this;
+        $new->role = $role;
+        return $new;
+    }
+
     public function jsonSerialize(): array
     {
         return [

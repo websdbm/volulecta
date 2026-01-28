@@ -1,0 +1,9 @@
+{% extends "layout.twig" %}
+
+{% block title %}{{ title }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="cms-page-container container">
+    {% include "cms/blocks/render.twig" with {'blocks': blocks} %}
+</div>
+{% endblock %}

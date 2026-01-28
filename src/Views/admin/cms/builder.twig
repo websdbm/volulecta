@@ -1,0 +1,560 @@
+{% extends "layout.twig" %}
+
+{% block title %}{{ title }} - {{ app_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body { background: #f8f9fa; overflow: hidden; }
+    /* Override main layout constraints for the builder */
+    main {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    footer { display: none; }
+    
+    .builder-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr 340px;
+        height: calc(100vh - 64px); /* Header height is about 64px */
+        background: #ddd;
+    }
+    .builder-sidebar, .builder-settings {
+        background: white;
+        padding: 1.5rem;
+        overflow-y: auto;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        z-index: 10;
+    }
+    .builder-canvas {
+        background: #f1f1f1;
+        padding: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+    #canvas-container {
+        background: white;
+        width: 100%;
+        min-height: 100%;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        transition: width 0.3s;
+        margin: 0 auto;
+    }
+    
+    /* Responsive Canvas Sizes */
+    .canvas-desktop { width: 100% !important; }
+    .canvas-tablet { width: 768px !important; }
+    .canvas-mobile { width: 375px !important; }
+
+    /* Block UI */
+    .block-item {
+        padding: 1rem;
+        border: 2px dashed transparent;
+        position: relative;
+        cursor: pointer;
+    }
+    .block-item:hover { border-color: #3498db; }
+    .block-item.active { border-color: #3498db; background: rgba(52, 152, 219, 0.05); }
+    
+    .block-actions {
+        position: absolute;
+        right: 0;
+        top: 0;
+        display: none;
+        background: #3498db;
+        color: white;
+        padding: 2px 5px;
+        font-size: 10px;
+        z-index: 10;
+    }
+    .block-item:hover .block-actions { display: block; }
+
+    /* Tooltip-like Form Controls */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.025em;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f8fafc;
+        transition: all 0.2s;
+        color: #1e293b;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
+    .color-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f8fafc;
+        padding: 5px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    .color-preview {
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        flex-shrink: 0;
+    }
+    .color-input-field {
+        border: none;
+        background: transparent;
+        width: 100%;
+        font-size: 0.9rem;
+        outline: none;
+    }
+
+    /* Tabs per Responsività */
+    .responsive-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 2.5rem;
+        background: #f1f5f9;
+        padding: 8px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+    }
+    .tab-btn {
+        flex: 1;
+        border: none;
+        padding: 16px 8px;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 12px;
+        font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        color: #94a3b8;
+    }
+    .tab-btn:hover { background: white; color: #3498db; }
+    .tab-btn.active { 
+        background: white; 
+        color: #3498db;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Buttons */
+    .builder-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+    .btn-save {
+        padding: 0.8rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .btn-save:hover { background: #2980b9; transform: translateY(-1px); }
+    .btn-save:active { transform: translateY(0); }
+
+    .btn-exit {
+        padding: 0.8rem;
+        background: #f1f5f9;
+        color: #64748b;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: center;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+    }
+    .btn-exit:hover { background: #e2e8f0; color: #1e293b; }
+
+    /* Saving Overlay */
+    #save-status {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        background: #10b981;
+        color: white;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        font-weight: 600;
+        animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="builder-layout">
+    <!-- Sidebar: Blocchi Disponibili -->
+    <div class="builder-sidebar">
+        <h3 style="margin-bottom: 1.5rem; color: #1e293b;">Componenti</h3>
+        <div id="tools">
+            <div class="tool-item" data-type="title" style="padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 0.75rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                <span style="font-size: 1.5rem;">🔤</span> 
+                <span style="font-weight: 600; color: #475569;">Titolo</span>
+            </div>
+            <div class="tool-item" data-type="text" style="padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 0.75rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                <span style="font-size: 1.5rem;">📄</span> 
+                <span style="font-weight: 600; color: #475569;">Testo</span>
+            </div>
+            <div class="tool-item" data-type="image" style="padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 0.75rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;">
+                <span style="font-size: 1.5rem;">🖼️</span> 
+                <span style="font-weight: 600; color: #475569;">Immagine</span>
+            </div>
+        </div>
+        <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
+        <div class="builder-actions">
+            <button id="save-btn" class="btn-save">
+                <span>💾</span> Salva Pagina
+            </button>
+            <a href="/admin/cms" class="btn-exit">Esci</a>
+        </div>
+    </div>
+
+    <!-- Canvas: Anteprima Live -->
+    <div class="builder-canvas">
+        <div id="canvas-container" class="canvas-desktop">
+            <div id="canvas" style="min-height: 500px; padding: 1rem;">
+                <!-- I blocchi verranno renderizzati qui via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings: Configurazione Blocco Selezionato -->
+    <div class="builder-settings">
+        <div id="settings-blank" style="color: #94a3b8; text-align: center; margin-top: 5rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
+            <p>Seleziona un blocco per modificarlo</p>
+        </div>
+        <div id="settings-form" style="display: none;">
+            <div class="responsive-tabs">
+                <button class="tab-btn active" data-view="desktop" title="Desktop">🖥️</button>
+                <button class="tab-btn" data-view="tablet" title="Tablet">📟</button>
+                <button class="tab-btn" data-view="mobile" title="Mobile">📱</button>
+            </div>
+            <h4 id="editing-block-type" style="margin-bottom: 1.5rem; color: #1e293b; border-bottom: 2px solid #3498db; display: inline-block; padding-bottom: 0.25rem;">Modifica Blocco</h4>
+            <div id="fields-container">
+                <!-- I campi dinamici verranno inseriti qui -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="save-status">Salvato con successo!</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    const pageId = {{ page.id }};
+    const canvas = document.getElementById('canvas');
+    const settingsForm = document.getElementById('settings-form');
+    const settingsBlank = document.getElementById('settings-blank');
+    const fieldsContainer = document.getElementById('fields-container');
+    const canvasContainer = document.getElementById('canvas-container');
+    
+    let blocks = {{ page.blocksJson|default('[]')|raw }};
+    let activeBlockIndex = null;
+    let currentView = 'desktop';
+
+    // Inizializzazione Builder
+    function init() {
+        renderCanvas();
+        
+        // Drag and Drop (Sortable)
+        new Sortable(canvas, {
+            animation: 150,
+            onEnd: (evt) => {
+                const movedBlock = blocks.splice(evt.oldIndex, 1)[0];
+                blocks.splice(evt.newIndex, 0, movedBlock);
+                renderCanvas();
+            }
+        });
+
+        // Click sui tool per aggiungere blocchi
+        document.querySelectorAll('.tool-item').forEach(item => {
+            item.addEventListener('click', () => {
+                addBlock(item.dataset.type);
+            });
+        });
+
+        // Tabs Responsività
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                
+                // Cambia dimensione canvas
+                canvasContainer.className = '';
+                canvasContainer.classList.add('canvas-' + currentView);
+                
+                if (activeBlockIndex !== null) openSettings(activeBlockIndex);
+            });
+        });
+
+        // Salva
+        document.getElementById('save-btn').addEventListener('click', savePage);
+    }
+
+    function addBlock(type) {
+        const newBlock = {
+            type: type,
+            content: { text: "Nuovo " + type },
+            settings: {
+                desktop: { font_size: "18px", color: "#333333", padding: "10px", align: "left" },
+                tablet: {},
+                mobile: {}
+            }
+        };
+        blocks.push(newBlock);
+        renderCanvas();
+        openSettings(blocks.length - 1);
+    }
+
+    function renderCanvas() {
+        canvas.innerHTML = '';
+        blocks.forEach((block, index) => {
+            const div = document.createElement('div');
+            div.className = 'block-item' + (activeBlockIndex === index ? ' active' : '');
+            
+            // Applica stili (prendendo dalla cascata Desktop -> Tablet -> Mobile se mancanti?)
+            // Per semplicità ora mostriamo solo anteprima base inline
+            const styles = getStylesForView(block, currentView);
+            div.style.cssText = `
+                color: ${styles.color || '#333'};
+                font-size: ${styles.font_size || '1rem'};
+                padding: ${styles.padding || '0'};
+                text-align: ${styles.align || 'left'};
+            `;
+
+            div.innerHTML = `
+                <div class="block-actions">#${index+1} ${block.type}</div>
+                ${renderBlockPreview(block)}
+            `;
+            
+            div.onclick = (e) => {
+                e.stopPropagation();
+                openSettings(index);
+            };
+            
+            canvas.appendChild(div);
+        });
+    }
+
+    function renderBlockPreview(block) {
+        if (block.type === 'image') {
+            const url = block.content.url || 'https://via.placeholder.com/600x300?text=Scegli+Immagine';
+            return `<img src="${url}" style="max-width: 100%; display: block; border-radius: 4px;">`;
+        }
+        return `<div style="min-height: 1.2em;">${block.content.text || '(Vuoto)'}</div>`;
+    }
+
+    function getStylesForView(block, view) {
+        // Fallback progressivo: Mobile -> Tablet -> Desktop
+        const desk = block.settings.desktop || {};
+        const tab = block.settings.tablet || {};
+        const mob = block.settings.mobile || {};
+
+        if (view === 'desktop') return desk;
+        if (view === 'tablet') return { ...desk, ...tab };
+        if (view === 'mobile') return { ...desk, ...tab, ...mob };
+    }
+
+    function openSettings(index) {
+        activeBlockIndex = index;
+        const block = blocks[index];
+        settingsBlank.style.display = 'none';
+        settingsForm.style.display = 'block';
+        document.getElementById('editing-block-type').innerText = 'Modifica ' + block.type;
+        
+        fieldsContainer.innerHTML = '';
+        
+        // Campi Contenuto
+        const contentGroup = document.createElement('div');
+        contentGroup.className = 'form-group';
+        
+        const contentLabel = document.createElement('label');
+        contentLabel.innerText = "Contenuto " + (block.type === 'image' ? 'URL' : 'Testo');
+        contentGroup.appendChild(contentLabel);
+
+        const contentInput = document.createElement('input');
+        contentInput.className = 'form-control';
+        contentInput.value = block.type === 'image' ? (block.content.url || '') : block.content.text;
+        contentInput.oninput = (e) => {
+            if (block.type === 'image') block.content.url = e.target.value;
+            else block.content.text = e.target.value;
+            renderCanvas();
+        };
+        contentGroup.appendChild(contentInput);
+
+        // Upload se Immagine
+        if (block.type === 'image') {
+            const uploadBtn = document.createElement('input');
+            uploadBtn.type = 'file';
+            uploadBtn.style.marginTop = '10px';
+            uploadBtn.style.fontSize = '0.8rem';
+            uploadBtn.onchange = (e) => handleUpload(e, index);
+            contentGroup.appendChild(uploadBtn);
+        }
+        fieldsContainer.appendChild(contentGroup);
+
+        fieldsContainer.appendChild(document.createElement('hr'));
+
+        // Campi Stile
+        const currentStyles = block.settings[currentView] || {};
+
+        addStyleField('Colore Testo', 'color', 'color', currentStyles.color || '#333333');
+        addStyleField('Dimensione Font', 'font_size', 'text', currentStyles.font_size || '');
+        addStyleField('Allineamento', 'align', 'select', currentStyles.align || 'left', ['left', 'center', 'right']);
+        addStyleField('Padding', 'padding', 'text', currentStyles.padding || '');
+
+        renderCanvas();
+    }
+
+    function addStyleField(label, prop, type, value, options = []) {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        
+        const l = document.createElement('label');
+        l.innerText = label;
+        div.appendChild(l);
+
+        if (type === 'color') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'color-input-wrapper';
+            
+            const preview = document.createElement('div');
+            preview.className = 'color-preview';
+            preview.style.background = value;
+            
+            const picker = document.createElement('input');
+            picker.type = 'color';
+            picker.value = value.startsWith('#') ? value : '#000000';
+            picker.style.position = 'absolute';
+            picker.style.opacity = '0';
+            picker.style.width = '30px';
+            picker.style.height = '30px';
+            picker.style.cursor = 'pointer';
+            
+            const text = document.createElement('input');
+            text.className = 'color-input-field';
+            text.value = value;
+            
+            picker.oninput = (e) => {
+                text.value = e.target.value;
+                preview.style.background = e.target.value;
+                updateStyle(prop, e.target.value);
+            };
+            
+            text.oninput = (e) => {
+                preview.style.background = e.target.value;
+                updateStyle(prop, e.target.value);
+            };
+            
+            wrapper.appendChild(picker);
+            wrapper.appendChild(preview);
+            wrapper.appendChild(text);
+            div.appendChild(wrapper);
+        } else if (type === 'select') {
+            const input = document.createElement('select');
+            input.className = 'form-control';
+            options.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o;
+                opt.innerText = o;
+                if (o === value) opt.selected = true;
+                input.appendChild(opt);
+            });
+            input.onchange = (e) => updateStyle(prop, e.target.value);
+            div.appendChild(input);
+        } else {
+            const input = document.createElement('input');
+            input.type = type;
+            input.value = value;
+            input.className = 'form-control';
+            input.oninput = (e) => updateStyle(prop, e.target.value);
+            div.appendChild(input);
+        }
+        
+        fieldsContainer.appendChild(div);
+    }
+
+    function updateStyle(prop, value) {
+        if (!blocks[activeBlockIndex].settings[currentView]) {
+            blocks[activeBlockIndex].settings[currentView] = {};
+        }
+        blocks[activeBlockIndex].settings[currentView][prop] = value;
+        renderCanvas();
+    }
+
+    async function handleUpload(e, index) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Nota: Servirebbe una Action di upload dedicata che ritorna l'URL
+        // Per ora simuliamo o usiamo un endpoint futuro. Implementerò l'endpoint dopo.
+        try {
+            const res = await fetch('/admin/cms/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            blocks[index].content.url = data.path; // data.path should already be /uploads/...
+            renderCanvas();
+            openSettings(index);
+        } catch (err) {
+            alert("Errore caricamento");
+        }
+    }
+
+    async function savePage() {
+        const res = await fetch(`/admin/cms/builder/${pageId}/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blocks: blocks })
+        });
+        
+        if (res.ok) {
+            const status = document.getElementById('save-status');
+            status.style.display = 'block';
+            setTimeout(() => status.style.display = 'none', 3000);
+        }
+    }
+
+    init();
+</script>
+{% endblock %}

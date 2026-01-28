@@ -20,6 +20,17 @@ return function (App $app) {
     // Admin routes
     $app->group('/admin', function ($group) {
         $group->get('/dashboard', \App\Application\Actions\Admin\DashboardAction::class);
+        $group->get('/users', \App\Application\Actions\Admin\ListUsersAction::class);
+        $group->post('/users/{id}/role', \App\Application\Actions\Admin\UpdateUserRoleAction::class);
+
+        $group->get('/cms', \App\Application\Actions\Admin\Cms\ListPagesAction::class);
+        $group->map(['GET', 'POST'], '/cms/create', \App\Application\Actions\Admin\Cms\CreatePageAction::class);
+        $group->get('/cms/delete/{id}', \App\Application\Actions\Admin\Cms\DeletePageAction::class);
+        
+        // Builder
+        $group->get('/cms/builder/{id}', \App\Application\Actions\Admin\Cms\CmsBuilderAction::class);
+        $group->post('/cms/builder/{id}/save', \App\Application\Actions\Admin\Cms\SaveBuilderAction::class);
+        $group->post('/cms/upload', \App\Application\Actions\Admin\Cms\CmsUploadAction::class);
     })->add(new \App\Application\Middleware\RoleMiddleware('admin'));
 
     // Bibliophile routes
@@ -34,4 +45,7 @@ return function (App $app) {
 
     // Home page
     $app->get('/', HomeAction::class);
+
+    // Public CMS pages
+    $app->get('/p/{slug}', \App\Application\Actions\Cms\PublicPageAction::class);
 };

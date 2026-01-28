@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 use DI\ContainerBuilder;
 use Slim\Factory\AppFactory;
 
@@ -24,6 +28,9 @@ $container = $containerBuilder->build();
 // Create App
 AppFactory::setContainer($container);
 $app = AppFactory::create();
+
+// Add Body Parsing Middleware
+$app->addBodyParsingMiddleware();
 
 // Add Routing Middleware
 $app->addRoutingMiddleware();

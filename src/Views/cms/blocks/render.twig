@@ -1,0 +1,42 @@
+{% macro block_styles(block, index) %}
+    <style>
+        #block-{{ index }} {
+            color: {{ block.settings.desktop.color|default('inherit') }};
+            font-size: {{ block.settings.desktop.font_size|default('inherit') }};
+            text-align: {{ block.settings.desktop.align|default('left') }};
+            padding: {{ block.settings.desktop.padding|default('0') }};
+        }
+        @media (max-width: 1024px) {
+            #block-{{ index }} {
+                {% if block.settings.tablet.color %}color: {{ block.settings.tablet.color }};{% endif %}
+                {% if block.settings.tablet.font_size %}font-size: {{ block.settings.tablet.font_size }};{% endif %}
+                {% if block.settings.tablet.align %}text-align: {{ block.settings.tablet.align }};{% endif %}
+                {% if block.settings.tablet.padding %}padding: {{ block.settings.tablet.padding }};{% endif %}
+            }
+        }
+        @media (max-width: 768px) {
+            #block-{{ index }} {
+                {% if block.settings.mobile.color %}color: {{ block.settings.mobile.color }};{% endif %}
+                {% if block.settings.mobile.font_size %}font-size: {{ block.settings.mobile.font_size }};{% endif %}
+                {% if block.settings.mobile.align %}text-align: {{ block.settings.mobile.align }};{% endif %}
+                {% if block.settings.mobile.padding %}padding: {{ block.settings.mobile.padding }};{% endif %}
+            }
+        }
+    </style>
+{% endmacro %}
+
+{% import _self as renderer %}
+{% for index, block in blocks %}
+    {{ renderer.block_styles(block, index) }}
+    <div id="block-{{ index }}" class="cms-block block-type-{{ block.type }}">
+        {% if block.type == 'title' %}
+            <h1>{{ block.content.text }}</h1>
+        {% elseif block.type == 'text' %}
+            <p>{{ block.content.text|nl2br }}</p>
+        {% elseif block.type == 'image' %}
+            {% if block.content.url %}
+            <img src="{{ block.content.url }}" style="max-width: 100%;" alt="">
+            {% endif %}
+        {% endif %}
+    </div>
+{% endfor %}
