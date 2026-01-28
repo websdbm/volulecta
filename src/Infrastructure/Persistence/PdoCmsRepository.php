@@ -46,9 +46,9 @@ class PdoCmsRepository implements CmsRepositoryInterface
     {
         if ($page->getId() === null) {
             $stmt = $this->db->prepare('
-                INSERT INTO cms_pages (slug, title, template, blocks_json, seo_title, seo_description, status, published_at, created_at, updated_at)
-                VALUES (:slug, :title, :template, :blocks_json, :seo_title, :seo_description, :status, :published_at, NOW(), NOW())
-            ');
+            INSERT INTO cms_pages (slug, title, template, blocks_json, seo_title, seo_description, status, published_at, is_homepage, created_at, updated_at)
+            VALUES (:slug, :title, :template, :blocks_json, :seo_title, :seo_description, :status, :published_at, :is_homepage, NOW(), NOW())
+        ');
             $stmt->execute([
                 'slug' => $page->getSlug(),
                 'title' => $page->getTitle(),
@@ -58,6 +58,7 @@ class PdoCmsRepository implements CmsRepositoryInterface
                 'seo_description' => $page->getSeoDescription(),
                 'status' => $page->getStatus(),
                 'published_at' => $page->getPublishedAt(),
+                'is_homepage' => $page->isHomepage() ? 1 : 0,
             ]);
             $id = (int) $this->db->lastInsertId();
             return $this->findById($id);
@@ -67,7 +68,7 @@ class PdoCmsRepository implements CmsRepositoryInterface
             UPDATE cms_pages
             SET slug = :slug, title = :title, template = :template, blocks_json = :blocks_json, 
                 seo_title = :seo_title, seo_description = :seo_description, status = :status, 
-                published_at = :published_at, updated_at = NOW()
+                published_at = :published_at, is_homepage = :is_homepage, updated_at = NOW()
             WHERE id = :id
         ');
         $stmt->execute([
@@ -80,6 +81,7 @@ class PdoCmsRepository implements CmsRepositoryInterface
             'seo_description' => $page->getSeoDescription(),
             'status' => $page->getStatus(),
             'published_at' => $page->getPublishedAt(),
+            'is_homepage' => $page->isHomepage() ? 1 : 0,
         ]);
         return $this->findById($page->getId());
     }
@@ -102,6 +104,7 @@ class PdoCmsRepository implements CmsRepositoryInterface
             $data['seo_description'],
             $data['status'],
             $data['published_at'],
+            (bool) $data['is_homepage'],
             $data['created_at'],
             $data['updated_at']
         );

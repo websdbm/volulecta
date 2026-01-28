@@ -18,8 +18,9 @@ class CmsPage implements JsonSerializable
         private ?string $seoDescription,
         private string $status,
         private ?string $publishedAt,
-        private string $createdAt,
-        private string $updatedAt
+        private bool $isHomepage = false,
+        private string $createdAt = '',
+        private string $updatedAt = ''
     ) {
     }
 
@@ -78,6 +79,11 @@ class CmsPage implements JsonSerializable
         return $this->updatedAt;
     }
 
+    public function isHomepage(): bool
+    {
+        return $this->isHomepage;
+    }
+
     public function jsonSerialize(): array
     {
         return [
@@ -90,6 +96,7 @@ class CmsPage implements JsonSerializable
             'seo_description' => $this->seoDescription,
             'status' => $this->status,
             'published_at' => $this->publishedAt,
+            'is_homepage' => $this->isHomepage,
             'created_at' => $this->createdAt,
             'updated_at' => $this->updatedAt,
         ];
