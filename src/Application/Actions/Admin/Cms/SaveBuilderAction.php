@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Actions\Admin\Cms;
 
+use App\Application\Utils\BlockValidator;
 use App\Domain\Repositories\CmsRepositoryInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -21,11 +22,28 @@ class SaveBuilderAction
         $page = $this->cmsRepository->findById($id);
 
         if (!$page) {
-            return $response->withStatus(404);
+            $response->getBody()->write(json_encode([
+                'status' => 'error',
+                'message' => 'Pagina non trovata'
+            ]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
         }
 
         $data = $request->getParsedBody();
-        $blocksJson = json_encode($data['blocks'] ?? []);
+        $blocks = $data['blocks'] ?? [];
+
+        // Valida i blocchi
+        $validation = BlockValidator::validateBlocks($blocks);
+        if (!$validation['valid']) {
+            $response->getBody()->write(json_encode([
+                'status' => 'error',
+                'message' => 'Dati blocchi non validi',
+                'errors' => $validation['errors']
+            ]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+
+        $blocksJson = json_encode($blocks);
 
         // Use a reflection or a setter if available, 
         // but since our Entity is immutable for now, we create a new one
@@ -46,7 +64,10 @@ class SaveBuilderAction
 
         $this->cmsRepository->save($updatedPage);
 
-        $response->getBody()->write(json_encode(['status' => 'success']));
+        $response->getBody()->write(json_encode([
+            'status' => 'success',
+            'message' => 'Pagina salvata con successo'
+        ]));
         return $response->withHeader('Content-Type', 'application/json');
     }
 }

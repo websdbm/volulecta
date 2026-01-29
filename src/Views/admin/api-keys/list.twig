@@ -90,6 +90,26 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+    .key-pair {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .key-pair-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #7f8c8d;
+        text-transform: uppercase;
+    }
+    .key-type-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #e8f4fd;
+        color: #2980b9;
+    }
 </style>
 {% endblock %}
 
@@ -109,7 +129,8 @@
             <tr>
                 <th>Nome</th>
                 <th>Etichetta</th>
-                <th>Valore</th>
+                <th>Valore(i)</th>
+                <th>Tipo</th>
                 <th>Stato</th>
                 <th>Azioni</th>
             </tr>
@@ -119,7 +140,31 @@
             <tr>
                 <td><code>{{ key.keyName }}</code></td>
                 <td><strong>{{ key.keyLabel }}</strong></td>
-                <td><span class="key-value">{{ key.keyValue }}</span></td>
+                <td>
+                    {% if key.keyType == 'pair' %}
+                        <div class="key-pair">
+                            <div>
+                                <div class="key-pair-label">Primaria</div>
+                                <span class="key-value">{{ key.keyValue[:20] }}...</span>
+                            </div>
+                            <div>
+                                <div class="key-pair-label">Secondaria</div>
+                                <span class="key-value">{{ key.keyValueSecondary[:20] }}...</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <span class="key-value">{{ key.keyValue }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="key-type-badge">
+                        {% if key.keyType == 'pair' %}
+                            🔗 Coppia
+                        {% else %}
+                            🔑 Singola
+                        {% endif %}
+                    </span>
+                </td>
                 <td>
                     <span class="status-badge status-{{ key.isActive ? 'active' : 'inactive' }}">
                         {{ key.isActive ? 'Attiva' : 'Inattiva' }}

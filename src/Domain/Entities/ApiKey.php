@@ -16,7 +16,9 @@ class ApiKey implements JsonSerializable
         private ?string $description,
         private bool $isActive = true,
         private string $createdAt = '',
-        private string $updatedAt = ''
+        private string $updatedAt = '',
+        private string $keyType = 'single',
+        private ?string $keyValueSecondary = null
     ) {
     }
 
@@ -60,6 +62,16 @@ class ApiKey implements JsonSerializable
         return $this->updatedAt;
     }
 
+    public function getKeyType(): string
+    {
+        return $this->keyType;
+    }
+
+    public function getKeyValueSecondary(): ?string
+    {
+        return $this->keyValueSecondary;
+    }
+
     public function jsonSerialize(): array
     {
         return [
@@ -67,8 +79,10 @@ class ApiKey implements JsonSerializable
             'key_name' => $this->keyName,
             'key_label' => $this->keyLabel,
             'key_value' => $this->keyValue,
+            'key_value_secondary' => $this->keyValueSecondary,
             'description' => $this->description,
             'is_active' => $this->isActive,
+            'key_type' => $this->keyType,
             'created_at' => $this->createdAt,
             'updated_at' => $this->updatedAt,
         ];

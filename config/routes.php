@@ -41,17 +41,29 @@ return function (App $app) {
         $group->map(['GET', 'POST'], '/api-keys/edit/{id}', \App\Application\Actions\Admin\ApiKeys\SaveApiKeyAction::class);
         $group->post('/api-keys/create', \App\Application\Actions\Admin\ApiKeys\SaveApiKeyAction::class);
         $group->get('/api-keys/delete/{id}', \App\Application\Actions\Admin\ApiKeys\DeleteApiKeyAction::class);
+
+        // Book Search
+        $group->get('/books/search', \App\Application\Actions\Search\BookSearchPageAction::class);
     })->add(new \App\Application\Middleware\RoleMiddleware('admin'));
 
     // Bibliophile routes
     $app->group('/bibliofilo', function ($group) {
         $group->get('/dashboard', \App\Application\Actions\Biblio\DashboardAction::class);
+        
+        // Book Search
+        $group->get('/books/search', \App\Application\Actions\Search\BookSearchPageAction::class);
     })->add(new \App\Application\Middleware\RoleMiddleware('bibliophile'));
 
     // App routes (protected for users)
     $app->group('/app', function ($group) {
         $group->get('/dashboard', \App\Application\Actions\App\DashboardAction::class);
     })->add(new \App\Application\Middleware\RoleMiddleware(['user', 'admin', 'bibliophile']));
+
+    // Test endpoint
+    $app->get('/api/tests/backend', \App\Application\Actions\Test\RunTestsAction::class);
+
+    // Search API endpoint
+    $app->post('/api/search/books', \App\Application\Actions\Search\SearchBooksAction::class);
 
     // Home page
     $app->get('/', HomeAction::class);

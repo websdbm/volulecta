@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS Builder - Test Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .info {
+            color: #007bff;
+        }
+        .metric {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 4px solid #007bff;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 CMS Builder - Test Suite</h1>
+        <p class="subtitle">Esegui i test automatici per il CMS Builder</p>
+        
+        <div class="buttons">
+            <button class="btn-primary" onclick="runJavaScriptTests()">
+                ▶️ Test Console (Fast)
+            </button>
+            <button class="btn-secondary" onclick="runPhpTests()">
+                ▶️ Test PHP Backend
+            </button>
+            <button class="btn-success" onclick="clearOutput()">
+                🗑️ Pulisci Output
+            </button>
+        </div>
+
+        <div id="output" class="output">
+            <span class="info">📋 Test Output</span>
+        </div>
+
+        <div id="metrics" class="metric"></div>
+    </div>
+
+    <script>
+        const outputDiv = document.getElementById('output');
+        const metricsDiv = document.getElementById('metrics');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            const span = document.createElement('div');
+            span.className = type;
+            span.textContent = `[${timestamp}] ${prefix} ${message}`;
+            outputDiv.appendChild(span);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        function clearOutput() {
+            outputDiv.innerHTML = '';
+            metricsDiv.innerHTML = '';
+            log('Output cleared', 'info');
+        }
+
+        function showMetrics(data) {
+            metricsDiv.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-value">${data.passed}</div>
+                    <div class="metric-label">Passed</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${data.failed}</div>
+                    <div class="metric-label">Failed</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${data.total}</div>
+                    <div class="metric-label">Total</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${data.successRate}%</div>
+                    <div class="metric-label">Success Rate</div>
+                </div>
+            `;
+        }
+
+        function runJavaScriptTests() {
+            clearOutput();
+            log('Starting JavaScript tests...', 'info');
+            
+            try {
+                // Importa il test
+                const script = document.createElement('script');
+                script.src = '/js/builder-tests.js';
+                script.onload = () => {
+                    log('Test file loaded', 'success');
+                    
+                    // Esegui i test
+                    if (typeof runBuilderTests === 'function') {
+                        log('Running builder tests...', 'info');
+                        const results = runBuilderTests();
+                        
+                        log('', 'info');
+                        log('─── TEST RESULTS ───', 'info');
+                        log(`✅ Passed: ${results.passed}`, 'success');
+                        log(`❌ Failed: ${results.failed}`, results.failed > 0 ? 'error' : 'success');
+                        log(`📊 Total: ${results.total}`, 'info');
+                        log(`📈 Success Rate: ${results.successRate}%`, results.successRate === '100.0' ? 'success' : 'warning');
+                        
+                        showMetrics({
+                            passed: results.passed,
+                            failed: results.failed,
+                            total: results.total,
+                            successRate: parseFloat(results.successRate).toFixed(1)
+                        });
+
+                        if (results.failed === 0) {
+                            log('🎉 ALL TESTS PASSED!', 'success');
+                        }
+                    } else {
+                        log('runBuilderTests function not found', 'error');
+                    }
+                };
+                script.onerror = () => {
+                    log('Failed to load test file', 'error');
+                };
+                document.head.appendChild(script);
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function runPhpTests() {
+            clearOutput();
+            log('Fetching PHP test results...', 'info');
+            
+            fetch('/api/tests/backend')
+                .then(response => response.json())
+                .then(data => {
+                    log('', 'info');
+                    log('─── PHP TEST RESULTS ───', 'info');
+                    log(`✅ Passed: ${data.passed}`, 'success');
+                    log(`❌ Failed: ${data.failed}`, data.failed > 0 ? 'error' : 'success');
+                    log(`📊 Total: ${data.total}`, 'info');
+                    log(`📈 Success Rate: ${data.successRate}%`, data.successRate === 100 ? 'success' : 'warning');
+                    
+                    showMetrics({
+                        passed: data.passed,
+                        failed: data.failed,
+                        total: data.total,
+                        successRate: data.successRate
+                    });
+
+                    if (data.failed === 0) {
+                        log('🎉 ALL TESTS PASSED!', 'success');
+                    }
+                })
+                .catch(error => {
+                    log(`Error fetching tests: ${error.message}`, 'error');
+                });
+        }
+
+        // Log initial message
+        window.addEventListener('load', () => {
+            log('Test runner ready', 'success');
+            log('Click a button to start testing', 'info');
+        });
+    </script>
+</body>
+</html>

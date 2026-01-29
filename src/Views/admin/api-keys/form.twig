@@ -130,9 +130,9 @@
         <h4>💡 API Keys Disponibili</h4>
         <p>Configura qui le chiavi API necessarie per il funzionamento della piattaforma:</p>
         <ul>
-            <li><strong>tinymce</strong> - Editor WYSIWYG nel CMS Builder</li>
-            <li><strong>openai</strong> - Servizi AI per raccomandazioni</li>
-            <li><strong>amazon</strong> - API Amazon per ricerca libri</li>
+            <li><strong>tinymce</strong> - Editor WYSIWYG nel CMS Builder (singola chiave)</li>
+            <li><strong>openai</strong> - Servizi AI per raccomandazioni (singola chiave)</li>
+            <li><strong>amazon</strong> - API Amazon per ricerca libri (coppia di chiavi: Access Key ID + Secret Access Key)</li>
         </ul>
     </div>
 
@@ -153,9 +153,34 @@
         </div>
 
         <div class="form-group">
+            <label for="key_type">Tipo di Chiave <span class="required">*</span></label>
+            <select id="key_type" name="key_type" class="form-control" required onchange="toggleKeyTypeFields()">
+                <option value="single" {{ (not api_key or api_key.keyType == 'single') ? 'selected' : '' }}>Chiave Singola</option>
+                <option value="pair" {{ api_key and api_key.keyType == 'pair' ? 'selected' : '' }}>Coppia di Chiavi</option>
+            </select>
+            <div class="form-help">
+                <strong>Chiave Singola:</strong> Un unico valore (es. TinyMCE, OpenAI)<br>
+                <strong>Coppia di Chiavi:</strong> Due valori separati (es. Amazon Access Key + Secret Key)
+            </div>
+        </div>
+
+        <div class="form-group" id="single-key-group">
             <label for="key_value">Valore API Key <span class="required">*</span></label>
             <textarea id="key_value" name="key_value" class="form-control" required>{{ api_key ? api_key.keyValue : '' }}</textarea>
             <div class="form-help">Il valore della chiave API fornito dal servizio</div>
+        </div>
+
+        <div id="pair-key-group" style="display: none;">
+            <div class="form-group">
+                <label for="key_value_primary">Chiave Primaria <span class="required">*</span></label>
+                <textarea id="key_value_primary" name="key_value" class="form-control">{{ api_key and api_key.keyType == 'pair' ? api_key.keyValue : '' }}</textarea>
+                <div class="form-help">Prima chiave (es. Access Key ID per Amazon)</div>
+            </div>
+            <div class="form-group">
+                <label for="key_value_secondary">Chiave Secondaria <span class="required">*</span></label>
+                <textarea id="key_value_secondary" name="key_value_secondary" class="form-control">{{ api_key ? api_key.keyValueSecondary : '' }}</textarea>
+                <div class="form-help">Seconda chiave (es. Secret Access Key per Amazon)</div>
+            </div>
         </div>
 
         <div class="form-group">
@@ -177,4 +202,29 @@
         </div>
     </form>
 </div>
+
+<script>
+    function toggleKeyTypeFields() {
+        const keyType = document.getElementById('key_type').value;
+        const singleKeyGroup = document.getElementById('single-key-group');
+        const pairKeyGroup = document.getElementById('pair-key-group');
+        
+        if (keyType === 'pair') {
+            singleKeyGroup.style.display = 'none';
+            pairKeyGroup.style.display = 'block';
+            document.getElementById('key_value_primary').required = true;
+            document.getElementById('key_value_secondary').required = true;
+            document.getElementById('key_value').required = false;
+        } else {
+            singleKeyGroup.style.display = 'block';
+            pairKeyGroup.style.display = 'none';
+            document.getElementById('key_value').required = true;
+            document.getElementById('key_value_primary').required = false;
+            document.getElementById('key_value_secondary').required = false;
+        }
+    }
+    
+    // Inizializza al caricamento della pagina
+    window.addEventListener('DOMContentLoaded', toggleKeyTypeFields);
+</script>
 {% endblock %}

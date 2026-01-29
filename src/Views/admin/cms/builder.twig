@@ -313,20 +313,45 @@
     /* Google Fonts Link */
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;700&family=Inter:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap');
 
-    /* Saving Overlay */
-    #save-status {
+    /* Notification System */
+    .notification {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        padding: 10px 20px;
-        border-radius: 20px;
-        background: #10b981;
+        padding: 15px 20px;
+        border-radius: 8px;
         color: white;
         display: none;
         z-index: 1000;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         font-weight: 600;
         animation: slideUp 0.3s ease-out;
+        max-width: 400px;
+        min-width: 300px;
+    }
+    .notification.show { display: block; }
+    .notification.success {
+        background: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .notification.error {
+        background: #ef4444;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    .notification.info {
+        background: #3498db;
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+    .notification.warning {
+        background: #f39c12;
+        box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+    }
+    .notification-title {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    .notification-message {
+        font-size: 0.9rem;
+        line-height: 1.4;
     }
     @keyframes slideUp {
         from { transform: translateY(20px); opacity: 0; }
@@ -399,6 +424,8 @@
 
 {% block content %}
 <script src="https://cdn.tiny.cloud/1/{{ tinymce_api_key }}/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="/js/builder-tests.js"></script>
+
 <div class="builder-layout">
     <!-- Sidebar: Blocchi Disponibili -->
     <div class="builder-sidebar">
@@ -475,11 +502,26 @@
     </div>
 </div>
 
-<div id="save-status">Salvato con successo!</div>
+<div id="save-status" class="notification"></div>
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
+    // Notification System
+    function notify(type, title, message, duration = 4000) {
+        const notif = document.getElementById('save-status');
+        notif.className = 'notification show ' + type;
+        notif.innerHTML = `
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        `;
+        
+        setTimeout(() => {
+            notif.classList.remove('show');
+        }, duration);
+    }
+    
+    // Variabili Globali
     const pageId = {{ page.id }};
     const pageSlug = '{{ page.slug }}';
     let pageStatus = '{{ page.status }}';
@@ -1057,20 +1099,32 @@
         
         // Extract numeric value
         const numValue = parseInt(value) || min;
+        const sliderId = 'slider-' + prop + '-' + Date.now();
         
         const slider = document.createElement('input');
         slider.type = 'range';
+        slider.id = sliderId;
         slider.min = min;
         slider.max = max;
         slider.value = numValue;
+        slider.setAttribute('aria-label', label);
+        slider.setAttribute('aria-valuenow', numValue);
+        slider.setAttribute('aria-valuemin', min);
+        slider.setAttribute('aria-valuemax', max);
+        slider.setAttribute('aria-valuetext', numValue + 'px');
         
         const display = document.createElement('div');
         display.className = 'range-value';
         display.innerText = numValue + 'px';
+        display.setAttribute('aria-live', 'polite');
+        display.setAttribute('aria-atomic', 'true');
         
         slider.oninput = (e) => {
-            display.innerText = e.target.value + 'px';
-            updateStyle(prop, e.target.value + 'px');
+            const newValue = e.target.value;
+            display.innerText = newValue + 'px';
+            slider.setAttribute('aria-valuenow', newValue);
+            slider.setAttribute('aria-valuetext', newValue + 'px');
+            updateStyle(prop, newValue + 'px');
         };
         
         wrapper.appendChild(slider);
@@ -1094,6 +1148,7 @@
             const preview = document.createElement('div');
             preview.className = 'color-preview';
             preview.style.background = value;
+            preview.setAttribute('aria-label', `Preview del colore ${value}`);
             
             const picker = document.createElement('input');
             picker.type = 'color';
@@ -1103,19 +1158,24 @@
             picker.style.width = '30px';
             picker.style.height = '30px';
             picker.style.cursor = 'pointer';
+            picker.setAttribute('aria-label', label + ' - Selettore colore');
             
             const text = document.createElement('input');
             text.className = 'color-input-field';
             text.value = value;
+            text.setAttribute('aria-label', label + ' - Valore esadecimale');
+            text.setAttribute('title', 'Inserisci un colore hex (es: #FF0000)');
             
             picker.oninput = (e) => {
                 text.value = e.target.value;
                 preview.style.background = e.target.value;
+                preview.setAttribute('aria-label', `Preview del colore ${e.target.value}`);
                 updateStyle(prop, e.target.value);
             };
             
             text.oninput = (e) => {
                 preview.style.background = e.target.value;
+                preview.setAttribute('aria-label', `Preview del colore ${e.target.value}`);
                 updateStyle(prop, e.target.value);
             };
             
@@ -1126,6 +1186,7 @@
         } else if (type === 'select') {
             const input = document.createElement('select');
             input.className = 'form-control';
+            input.setAttribute('aria-label', label);
             options.forEach(o => {
                 const opt = document.createElement('option');
                 opt.value = o;
@@ -1152,6 +1213,10 @@
             input.type = type;
             input.value = value;
             input.className = 'form-control';
+            input.setAttribute('aria-label', label);
+            if (type === 'text') {
+                input.setAttribute('title', 'Formato: numero + unità (es: 10px, 1.5em)');
+            }
             input.oninput = (e) => updateStyle(prop, e.target.value);
             div.appendChild(input);
         }
@@ -1171,36 +1236,76 @@
         const file = e.target.files[0];
         if (!file) return;
 
+        // Validazione file
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (file.size > maxSize) {
+            notify('error', '❌ Upload Fallito', `Immagine troppo grande (max 5MB). La tua: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+            return;
+        }
+        
+        if (!allowedTypes.includes(file.type)) {
+            notify('error', '❌ Upload Fallito', `Formato non supportato. Supportati: JPEG, PNG, GIF, WebP`);
+            return;
+        }
+
+        notify('info', '⏳ Upload in corso...', `Caricamento di ${file.name}...`, 0);
+
         const formData = new FormData();
         formData.append('file', file);
 
-        // Nota: Servirebbe una Action di upload dedicata che ritorna l'URL
-        // Per ora simuliamo o usiamo un endpoint futuro. Implementerò l'endpoint dopo.
         try {
             const res = await fetch('/admin/cms/upload', {
                 method: 'POST',
                 body: formData
             });
+            
+            if (!res.ok) {
+                const errorData = await res.json();
+                notify('error', '❌ Upload Fallito', errorData.message || 'Errore durante il caricamento');
+                return;
+            }
+            
             const data = await res.json();
-            blocks[index].content.url = data.path; // data.path should already be /uploads/...
+            
+            // Add cache-busting
+            const timestamp = new Date().getTime();
+            blocks[index].content.url = data.path + '?v=' + timestamp;
+            
             renderCanvas();
             openSettings(index);
+            notify('success', '✅ Upload Completato', `Immagine ${file.name} caricata con successo`);
         } catch (err) {
-            alert("Errore caricamento");
+            console.error('Upload error:', err);
+            notify('error', '❌ Upload Fallito', 'Errore di connessione: ' + err.message);
         }
     }
 
     async function savePage() {
-        const res = await fetch(`/admin/cms/builder/${pageId}/save`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ blocks: blocks })
-        });
+        notify('info', '⏳ Salvataggio...', 'Sto salvando la pagina...', 0);
         
-        if (res.ok) {
-            const status = document.getElementById('save-status');
-            status.style.display = 'block';
-            setTimeout(() => status.style.display = 'none', 3000);
+        try {
+            const res = await fetch(`/admin/cms/builder/${pageId}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ blocks: blocks })
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok) {
+                notify('success', '✅ Salvato', data.message || 'Pagina salvata con successo');
+            } else {
+                let errorMsg = data.message || 'Errore durante il salvataggio';
+                if (data.errors) {
+                    errorMsg += '\n\n' + Object.values(data.errors).flat().join('\n');
+                }
+                notify('error', '❌ Errore Salvataggio', errorMsg);
+            }
+        } catch (err) {
+            console.error('Save error:', err);
+            notify('error', '❌ Errore Salvataggio', 'Errore di connessione: ' + err.message);
         }
     }
 
@@ -1212,61 +1317,65 @@
         if (pageStatus === 'published') {
             // Metti in bozza
             if (isHomepage) {
-                alert('Non è possibile mettere in bozza la homepage. Imposta prima un\'altra pagina come homepage.');
+                notify('warning', '⚠️ Azione Non Consentita', 'Non è possibile mettere in bozza la homepage. Imposta prima un\'altra pagina come homepage.');
                 return;
             }
             
             if (!confirm('Sei sicuro di voler mettere questa pagina in bozza?')) return;
 
-            const res = await fetch(`/admin/cms/${pageId}/unpublish`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            if (res.ok) {
+            notify('info', '⏳ Elaborazione...', 'Sto mettendo la pagina in bozza...', 0);
+
+            try {
+                const res = await fetch(`/admin/cms/${pageId}/unpublish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
                 const data = await res.json();
-                if (data.status === 'success') {
+                
+                if (res.ok && data.status === 'success') {
                     pageStatus = 'draft';
                     publishText.innerText = 'Pubblica Pagina';
                     publishIcon.innerText = '📤';
                     publishBtn.classList.remove('btn-draft');
                     publishBtn.classList.add('btn-publish');
                     
-                    const status = document.getElementById('save-status');
-                    status.innerText = 'Pagina messa in bozza!';
-                    status.style.display = 'block';
-                    status.style.background = '#f39c12';
-                    setTimeout(() => status.style.display = 'none', 3000);
+                    notify('success', '✅ Archiviata', 'Pagina messa in bozza con successo');
                 } else {
-                    alert(data.message || 'Errore');
+                    notify('error', '❌ Errore', data.message || 'Errore nel mettere in bozza la pagina');
                 }
-            } else {
-                const data = await res.json();
-                alert(data.message || 'Errore nel mettere in bozza la pagina');
+            } catch (err) {
+                console.error('Unpublish error:', err);
+                notify('error', '❌ Errore Connessione', err.message);
             }
         } else {
             // Pubblica
             if (!confirm('Sei sicuro di voler pubblicare questa pagina?')) return;
 
-            const res = await fetch(`/admin/cms/${pageId}/publish`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            if (res.ok) {
-                pageStatus = 'published';
-                publishText.innerText = 'Metti in Bozza';
-                publishIcon.innerText = '📋';
-                publishBtn.classList.remove('btn-publish');
-                publishBtn.classList.add('btn-draft');
+            notify('info', '⏳ Elaborazione...', 'Sto pubblicando la pagina...', 0);
+
+            try {
+                const res = await fetch(`/admin/cms/${pageId}/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 
-                const status = document.getElementById('save-status');
-                status.innerText = 'Pagina pubblicata con successo!';
-                status.style.display = 'block';
-                status.style.background = '#10b981';
-                setTimeout(() => status.style.display = 'none', 3000);
-            } else {
-                alert('Errore nel pubblicare la pagina');
+                const data = await res.json();
+                
+                if (res.ok) {
+                    pageStatus = 'published';
+                    publishText.innerText = 'Metti in Bozza';
+                    publishIcon.innerText = '📋';
+                    publishBtn.classList.remove('btn-publish');
+                    publishBtn.classList.add('btn-draft');
+                    
+                    notify('success', '✅ Pubblicata', 'Pagina pubblicata con successo!');
+                } else {
+                    notify('error', '❌ Errore', data.message || 'Errore nel pubblicare la pagina');
+                }
+            } catch (err) {
+                console.error('Publish error:', err);
+                notify('error', '❌ Errore Connessione', err.message);
             }
         }
     }
@@ -1277,20 +1386,28 @@
             return;
         }
 
-        const res = await fetch(`/admin/cms/${pageId}/set-homepage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (res.ok) {
-            const status = document.getElementById('save-status');
-            status.innerText = 'Homepage impostata con successo!';
-            status.style.display = 'block';
-            status.style.background = '#10b981';
-            setTimeout(() => status.style.display = 'none', 3000);
-        } else {
-            alert('Errore nell\'impostare la homepage');
+        notify('info', '⏳ Elaborazione...', 'Sto impostando questa pagina come homepage...', 0);
+
+        try {
+            const res = await fetch(`/admin/cms/${pageId}/set-homepage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok) {
+                isHomepage = true;
+                document.getElementById('set-homepage').disabled = true;
+                notify('success', '✅ Homepage Impostata', 'Questa pagina è ora la homepage!');
+            } else {
+                document.getElementById('set-homepage').checked = false;
+                notify('error', '❌ Errore', data.message || 'Errore nell\'impostare la homepage');
+            }
+        } catch (err) {
+            console.error('Set homepage error:', err);
             document.getElementById('set-homepage').checked = false;
+            notify('error', '❌ Errore Connessione', err.message);
         }
     }
 

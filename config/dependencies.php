@@ -78,6 +78,10 @@ return function (ContainerBuilder $containerBuilder) {
             return new \App\Application\Services\AuthService($c->get(\App\Domain\Repositories\UserRepositoryInterface::class));
         },
 
+        \App\Application\Services\BookSearchService::class => function (ContainerInterface $c) {
+            return new \App\Application\Services\BookSearchService($c->get(\App\Domain\Repositories\ApiKeyRepositoryInterface::class));
+        },
+
         // Middleware
         \App\Application\Middleware\AuthMiddleware::class => function (ContainerInterface $c) {
             return new \App\Application\Middleware\AuthMiddleware();

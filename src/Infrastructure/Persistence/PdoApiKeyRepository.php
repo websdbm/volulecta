@@ -49,8 +49,10 @@ class PdoApiKeyRepository implements ApiKeyRepositoryInterface
                 SET key_name = :key_name, 
                     key_label = :key_label, 
                     key_value = :key_value, 
+                    key_value_secondary = :key_value_secondary,
                     description = :description, 
                     is_active = :is_active,
+                    key_type = :key_type,
                     updated_at = NOW()
                 WHERE id = :id
             ');
@@ -59,21 +61,25 @@ class PdoApiKeyRepository implements ApiKeyRepositoryInterface
                 'key_name' => $apiKey->getKeyName(),
                 'key_label' => $apiKey->getKeyLabel(),
                 'key_value' => $apiKey->getKeyValue(),
+                'key_value_secondary' => $apiKey->getKeyValueSecondary(),
                 'description' => $apiKey->getDescription(),
                 'is_active' => $apiKey->isActive() ? 1 : 0,
+                'key_type' => $apiKey->getKeyType(),
             ]);
         } else {
             // Insert
             $stmt = $this->pdo->prepare('
-                INSERT INTO api_keys (key_name, key_label, key_value, description, is_active, created_at, updated_at) 
-                VALUES (:key_name, :key_label, :key_value, :description, :is_active, NOW(), NOW())
+                INSERT INTO api_keys (key_name, key_label, key_value, key_value_secondary, description, is_active, key_type, created_at, updated_at) 
+                VALUES (:key_name, :key_label, :key_value, :key_value_secondary, :description, :is_active, :key_type, NOW(), NOW())
             ');
             $stmt->execute([
                 'key_name' => $apiKey->getKeyName(),
                 'key_label' => $apiKey->getKeyLabel(),
                 'key_value' => $apiKey->getKeyValue(),
+                'key_value_secondary' => $apiKey->getKeyValueSecondary(),
                 'description' => $apiKey->getDescription(),
                 'is_active' => $apiKey->isActive() ? 1 : 0,
+                'key_type' => $apiKey->getKeyType(),
             ]);
         }
     }
@@ -94,7 +100,9 @@ class PdoApiKeyRepository implements ApiKeyRepositoryInterface
             $data['description'],
             (bool) $data['is_active'],
             $data['created_at'],
-            $data['updated_at']
+            $data['updated_at'],
+            $data['key_type'] ?? 'single',
+            $data['key_value_secondary'] ?? null
         );
     }
 }

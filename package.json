@@ -1,0 +1,41 @@
+{
+  "name": "volulecta-cms-builder",
+  "version": "1.0.0",
+  "description": "CMS Builder - Complete test suite with Cypress E2E and integrated JavaScript tests",
+  "scripts": {
+    "test": "npm run test:quick",
+    "test:quick": "echo '🧪 Run: runBuilderTests() in browser console' && npm run server",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:e2e:headless": "cypress run --headless",
+    "test:e2e:builder": "cypress run --spec 'cypress/e2e/cms-builder.cy.js'",
+    "test:e2e:chrome": "cypress run --browser chrome",
+    "test:e2e:firefox": "cypress run --browser firefox",
+    "test:e2e:record": "cypress run --record",
+    "test:backend": "phpunit",
+    "test:all": "npm run test:e2e && npm run test:backend",
+    "lint": "eslint cypress/**/*.js",
+    "server": "npm run dev",
+    "dev": "docker-compose up -d && echo 'Server running on http://localhost:8080'",
+    "down": "docker-compose down"
+  },
+  "devDependencies": {
+    "cypress": "^13.6.0",
+    "eslint": "^8.54.0",
+    "eslint-plugin-cypress": "^2.15.1"
+  },
+  "keywords": [
+    "cms",
+    "builder",
+    "cypress",
+    "e2e-testing",
+    "php",
+    "slim-framework"
+  ],
+  "author": "Volulecta Team",
+  "license": "proprietary",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

@@ -31,7 +31,11 @@ class SaveApiKeyAction
                 $data['key_label'] ?? '',
                 $data['key_value'] ?? '',
                 $data['description'] ?? null,
-                isset($data['is_active'])
+                isset($data['is_active']),
+                '',
+                '',
+                $data['key_type'] ?? 'single',
+                $data['key_value_secondary'] ?? null
             );
 
             $this->apiKeyRepository->save($apiKey);
